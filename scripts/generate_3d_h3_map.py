@@ -1,9 +1,9 @@
 """
-Porto Taxi Trajectory Project – 3D Deck.gl Bulletproof Stacked Polygon Engine
-==============================================================================
-Generates a 100% reliable 3D Deck.gl Stacked Hexagon Map (`output/h3_3d_map.html`).
-Pre-computes H3 boundary polygons directly in Python [lng, lat] to bypass browser WASM/CORS CORS issues.
-Renders 3D Extruded Hexagonal Columns with MapLibre dark raster tiles.
+Porto Taxi Trajectory Project – Normalized 3D Stacked H3 Hexagon Pyramid Engine
+================================================================================
+Generates `output/h3_3d_map.html` with Min-Max Height Normalization (0.0 to 1.0 per layer).
+Each resolution layer (Res 8, Res 9, Res 10) contributes at most 1 unit (scaled cleanly),
+capping total stacked pyramid height to exactly 3 units max. Includes real-time height slider.
 """
 
 import os
@@ -27,7 +27,6 @@ OUTPUT_3D_MAP = "output/h3_3d_map.html"
 def get_cell_polygon(cell):
     try:
         boundary = h3.cell_to_boundary(cell)
-        # Convert (lat, lng) -> [lng, lat] for Deck.gl / GeoJSON
         return [[round(pt[1], 6), round(pt[0], 6)] for pt in boundary]
     except Exception:
         return None
@@ -35,7 +34,7 @@ def get_cell_polygon(cell):
 
 def generate_3d_map():
     print("╔══════════════════════════════════════════════════════════════╗")
-    print("║  Porto Taxi Project – 3D Deck.gl Bulletproof Polygon Engine  ║")
+    print("║  Porto Taxi Project – Normalized 3D Stacked Pyramid Engine   ║")
     print("╚══════════════════════════════════════════════════════════════╝")
     
     if not os.path.exists(INPUT_H3_PARQUET):
@@ -51,7 +50,7 @@ def generate_3d_map():
     total_trips = len(df)
     print(f"  ✓ Loaded {total_trips:,} trips.")
     
-    print("\n2. Computing Frequency & Pre-calculating 3D Hexagon Polygons...")
+    print("\n2. Computing Min-Max Normalized Heights (0.0 to 1.0 per layer)...")
     res8_counter = Counter()
     res9_counter = Counter()
     res10_counter = Counter()
@@ -68,61 +67,67 @@ def generate_3d_map():
         if row is not None:
             res10_counter.update(row)
             
-    # Process Res 8 (Neighborhoods - Cyan Base Layer)
+    # Scale multiplier for visual 3D extrusion (1 unit = 250 meters in 3D world space)
+    UNIT_METERS = 250.0
+            
+    # Process Res 8 (Neighborhoods - Cyan Base Layer: Norm 0.0 to 1.0)
     data_res8 = []
-    max_res8 = res8_counter.most_common(1)[0][1] if res8_counter else 1
+    max_res8 = float(res8_counter.most_common(1)[0][1]) if res8_counter else 1.0
     for cell, count in res8_counter.most_common(200):
         poly = get_cell_polygon(cell)
         if poly:
-            intensity = min(1.0, count / max_res8)
+            norm_val = round(count / max_res8, 4)  # 0.0 to 1.0
             data_res8.append({
                 "hex": cell,
                 "count": count,
+                "norm": norm_val,
                 "polygon": poly,
-                "height": float(round(count * 0.8, 1)),
-                "color": [0, 242, 254, int(160 + intensity * 85)]
+                "height": float(round(norm_val * UNIT_METERS, 1)),
+                "color": [0, 242, 254, int(150 + norm_val * 90)]
             })
             
-    # Process Res 9 (Streets - Electric Violet Middle Layer)
+    # Process Res 9 (Streets - Electric Violet Middle Layer: Norm 0.0 to 1.0)
     data_res9 = []
-    max_res9 = res9_counter.most_common(1)[0][1] if res9_counter else 1
+    max_res9 = float(res9_counter.most_common(1)[0][1]) if res9_counter else 1.0
     for cell, count in res9_counter.most_common(350):
         poly = get_cell_polygon(cell)
         if poly:
-            intensity = min(1.0, count / max_res9)
+            norm_val = round(count / max_res9, 4)  # 0.0 to 1.0
             data_res9.append({
                 "hex": cell,
                 "count": count,
+                "norm": norm_val,
                 "polygon": poly,
-                "height": float(round(count * 1.5, 1)),
-                "color": [127, 0, 255, int(180 + intensity * 75)]
+                "height": float(round(norm_val * UNIT_METERS, 1)),
+                "color": [127, 0, 255, int(170 + norm_val * 80)]
             })
 
-    # Process Res 10 (Intersections - Glowing Gold Pinnacle Layer)
+    # Process Res 10 (Intersections - Glowing Gold Pinnacle Layer: Norm 0.0 to 1.0)
     data_res10 = []
-    max_res10 = res10_counter.most_common(1)[0][1] if res10_counter else 1
+    max_res10 = float(res10_counter.most_common(1)[0][1]) if res10_counter else 1.0
     for cell, count in res10_counter.most_common(500):
         poly = get_cell_polygon(cell)
         if poly:
-            intensity = min(1.0, count / max_res10)
+            norm_val = round(count / max_res10, 4)  # 0.0 to 1.0
             data_res10.append({
                 "hex": cell,
                 "count": count,
+                "norm": norm_val,
                 "polygon": poly,
-                "height": float(round(count * 3.0, 1)),
-                "color": [255, 215, 0, int(200 + intensity * 55)]
+                "height": float(round(norm_val * UNIT_METERS, 1)),
+                "color": [255, 215, 0, int(190 + norm_val * 65)]
             })
             
-    print(f"  ✓ Processed Res 8 ({len(data_res8)} 3D polygons), Res 9 ({len(data_res9)} 3D polygons), Res 10 ({len(data_res10)} 3D polygons).")
+    print(f"  ✓ Processed Res 8 (Max: {int(max_res8):,} visits -> 1.0 norm), Res 9 (Max: {int(max_res9):,} -> 1.0 norm), Res 10 (Max: {int(max_res10):,} -> 1.0 norm).")
     
-    print("\n3. Building 100% Bulletproof 3D HTML App (`output/h3_3d_map.html`)...")
+    print("\n3. Building Normalized 3D HTML Pyramid App (`output/h3_3d_map.html`)...")
     
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Porto Taxi Trajectory – 3D Stacked H3 Hexagon Pyramid</title>
+    <title>Porto Taxi Trajectory – Normalized 3D Stacked H3 Hexagon Pyramid</title>
     <!-- Deck.gl & MapLibre GL -->
     <script src="https://unpkg.com/deck.gl@8.9.0/dist.min.js"></script>
     <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
@@ -145,12 +150,12 @@ def generate_3d_map():
             top: 20px;
             left: 20px;
             z-index: 10;
-            background: rgba(15, 23, 42, 0.90);
+            background: rgba(15, 23, 42, 0.92);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 16px;
             padding: 1.5rem;
-            width: 340px;
+            width: 350px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         }}
         
@@ -217,6 +222,26 @@ def generate_3d_map():
         input:checked + .slider {{ background-color: #00f2fe; }}
         input:checked + .slider:before {{ transform: translateX(16px); }}
 
+        .slider-container {{
+            margin-top: 1rem;
+            background: rgba(255,255,255,0.04);
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }}
+        .slider-title {{
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #cbd5e1;
+        }}
+        input[type=range] {{
+            width: 100%;
+            accent-color: #00f2fe;
+        }}
+
         .instruction-box {{
             background: rgba(0, 242, 254, 0.08);
             border-left: 3px solid #00f2fe;
@@ -249,12 +274,12 @@ def generate_3d_map():
 
     <div class="control-panel">
         <div class="panel-title">3D Stacked H3 Hexagon Pyramid</div>
-        <div class="panel-sub">Porto Taxi Density Topography • Extruded 3D Multi-Layer Hexagonal Columns</div>
+        <div class="panel-sub">Min-Max Normalized Elevation (0.0 – 1.0 per layer, Max 3.0 units total)</div>
 
         <div class="layer-toggle">
             <div class="layer-label">
                 <div class="color-dot dot-res8"></div>
-                Res 8 (Base Layer ~0.73km²)
+                Res 8 (Base Layer 0.0-1.0)
             </div>
             <label class="switch">
                 <input type="checkbox" id="check-res8" checked onchange="updateLayers()">
@@ -265,7 +290,7 @@ def generate_3d_map():
         <div class="layer-toggle">
             <div class="layer-label">
                 <div class="color-dot dot-res9"></div>
-                Res 9 (Middle Layer ~0.10km²)
+                Res 9 (Middle Layer 0.0-1.0)
             </div>
             <label class="switch">
                 <input type="checkbox" id="check-res9" checked onchange="updateLayers()">
@@ -276,7 +301,7 @@ def generate_3d_map():
         <div class="layer-toggle">
             <div class="layer-label">
                 <div class="color-dot dot-res10"></div>
-                Res 10 (Peak Layer ~66m)
+                Res 10 (Peak Layer 0.0-1.0)
             </div>
             <label class="switch">
                 <input type="checkbox" id="check-res10" checked onchange="updateLayers()">
@@ -284,11 +309,19 @@ def generate_3d_map():
             </label>
         </div>
 
+        <div class="slider-container">
+            <div class="slider-title">
+                <span>3D Height Extrusion Scale</span>
+                <span id="scale-val">1.0x</span>
+            </div>
+            <input type="range" id="height-scale" min="0.2" max="2.5" step="0.1" value="1.0" oninput="updateHeightScale(this.value)">
+        </div>
+
         <div class="instruction-box">
             <strong>🖱️ 3D Camera Controls:</strong><br>
             • <strong>Ctrl + Drag / Right Click:</strong> Tilt Pitch & Rotate Camera.<br>
             • <strong>Scroll:</strong> Zoom in/out.<br>
-            • <strong>Hover Hexagon:</strong> Inspect H3 Cell ID & Visit Counts.
+            • <strong>Hover Hexagon:</strong> Inspect Cell ID, Visits & Normalized Height.
         </div>
     </div>
 
@@ -299,6 +332,8 @@ def generate_3d_map():
         const dataRes9 = {json.dumps(data_res9)};
         const dataRes10 = {json.dumps(data_res10)};
 
+        let currentScale = 1.0;
+
         function updateTooltip(info) {{
             const tooltip = document.getElementById('tooltip');
             if (info.object) {{
@@ -308,14 +343,14 @@ def generate_3d_map():
                 tooltip.innerHTML = `
                     <div style="color:#00f2fe; font-weight:700;">H3 Cell ID: ${{info.object.hex}}</div>
                     <div>Visits: <strong>${{info.object.count.toLocaleString()}}</strong></div>
-                    <div>3D Height: <strong>${{info.object.height}}m</strong></div>
+                    <div>Normalized Height: <strong>${{info.object.norm}} / 1.00</strong></div>
                 `;
             }} else {{
                 tooltip.style.display = 'none';
             }}
         }}
 
-        // Bulletproof Dark Raster Tiles Specification (Never fails on local file://)
+        // Bulletproof Dark Raster Tiles
         const darkTileStyle = {{
             version: 8,
             sources: {{
@@ -338,7 +373,7 @@ def generate_3d_map():
         function getLayers() {{
             const layers = [];
 
-            // Layer 1: Res 8 Base Layer (Cyan - Base Extrusion)
+            // Layer 1: Res 8 Base Layer (0.0 to 1.0)
             if (document.getElementById('check-res8').checked) {{
                 layers.push(new deck.PolygonLayer({{
                     id: 'layer-polygon-res8',
@@ -348,7 +383,7 @@ def generate_3d_map():
                     filled: true,
                     extruded: true,
                     getPolygon: d => d.polygon,
-                    getElevation: d => d.height,
+                    getElevation: d => d.height * currentScale,
                     getFillColor: d => d.color,
                     getLineColor: [0, 242, 254, 120],
                     lineWidthMinPixels: 1,
@@ -356,7 +391,7 @@ def generate_3d_map():
                 }}));
             }}
 
-            // Layer 2: Res 9 Middle Layer (Electric Violet - Extruded Above)
+            // Layer 2: Res 9 Middle Layer (0.0 to 1.0)
             if (document.getElementById('check-res9').checked) {{
                 layers.push(new deck.PolygonLayer({{
                     id: 'layer-polygon-res9',
@@ -366,7 +401,7 @@ def generate_3d_map():
                     filled: true,
                     extruded: true,
                     getPolygon: d => d.polygon,
-                    getElevation: d => d.height,
+                    getElevation: d => d.height * currentScale,
                     getFillColor: d => d.color,
                     getLineColor: [255, 255, 255, 120],
                     lineWidthMinPixels: 1,
@@ -374,7 +409,7 @@ def generate_3d_map():
                 }}));
             }}
 
-            // Layer 3: Res 10 Peak Layer (Glowing Gold Pinnacle)
+            // Layer 3: Res 10 Peak Layer (0.0 to 1.0)
             if (document.getElementById('check-res10').checked) {{
                 layers.push(new deck.PolygonLayer({{
                     id: 'layer-polygon-res10',
@@ -384,7 +419,7 @@ def generate_3d_map():
                     filled: true,
                     extruded: true,
                     getPolygon: d => d.polygon,
-                    getElevation: d => d.height,
+                    getElevation: d => d.height * currentScale,
                     getFillColor: d => d.color,
                     getLineColor: [255, 255, 255, 160],
                     lineWidthMinPixels: 1,
@@ -401,9 +436,9 @@ def generate_3d_map():
             initialViewState: {{
                 longitude: -8.6291,
                 latitude: 41.1579,
-                zoom: 12.8,
-                pitch: 58,
-                bearing: 28
+                zoom: 13.0,
+                pitch: 55,
+                bearing: 25
             }},
             controller: true,
             layers: getLayers()
@@ -411,6 +446,12 @@ def generate_3d_map():
 
         function updateLayers() {{
             deckgl.setProps({{ layers: getLayers() }});
+        }}
+
+        function updateHeightScale(val) {{
+            currentScale = parseFloat(val);
+            document.getElementById('scale-val').innerText = val + 'x';
+            updateLayers();
         }}
     </script>
 </body>
@@ -420,7 +461,7 @@ def generate_3d_map():
     with open(OUTPUT_3D_MAP, "w", encoding="utf-8") as f:
         f.write(html_content)
         
-    print(f"  ✓ Saved 100% Bulletproof 3D Stacked Map to {OUTPUT_3D_MAP}")
+    print(f"  ✓ Saved Normalized 3D Stacked Map to {OUTPUT_3D_MAP}")
 
 if __name__ == "__main__":
     generate_3d_map()
