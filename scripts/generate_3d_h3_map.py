@@ -1,14 +1,11 @@
 """
-Porto Taxi Trajectory Project – 3D Deck.gl H3 Spatial Elevation Map Generator
-=============================================================================
-This script loads `output/h3_encoded_trips.parquet`, computes visit frequencies
-for H3 Resolution 8, Resolution 9, and Resolution 10, and generates a standalone,
-GPU-accelerated 3D Interactive Deck.gl H3 Elevation Map (`output/h3_3d_map.html`).
-Features:
-- Extruded 3D Hexagonal Columns (Height = Taxi Trip Frequency).
-- Glowing H3 Heatmap Topography.
-- Full 3D Camera Controls (Pitch, Tilt, Rotation, Zoom).
-- Resolution Switcher (Res 8 Neighborhoods, Res 9 Streets, Res 10 Intersections).
+Porto Taxi Trajectory Project – 3D Deck.gl Stacked H3 Hexagon Elevation Engine
+==============================================================================
+This script generates a 3D Stacked Hexagon Pyramid Map (`output/h3_3d_map.html`).
+- Base Layer (Bottom): Res 8 Hexagons (~0.73 km²) – Wide Cyan Base.
+- Middle Layer (Stacked): Res 9 Hexagons (~0.10 km²) – Medium Violet Core.
+- Top Layer (Peak): Res 10 Hexagons (~66m edge) – Glowing Gold Pinnacle.
+Columns extrude vertically proportionally to trip frequency.
 """
 
 import os
@@ -23,15 +20,13 @@ user_site = os.path.expanduser("~/Library/Python/3.9/lib/python/site-packages")
 if os.path.exists(user_site) and user_site not in sys.path:
     sys.path.insert(0, user_site)
 
-import h3
-
 INPUT_H3_PARQUET = "output/h3_encoded_trips.parquet"
 OUTPUT_3D_MAP = "output/h3_3d_map.html"
 
 
-def generate_3d_map():
+def generate_3d_stacked_map():
     print("╔══════════════════════════════════════════════════════════════╗")
-    print("║  Porto Taxi Project – 3D Deck.gl H3 Elevation Visualizer     ║")
+    print("║  Porto Taxi Project – 3D Stacked H3 Hexagon Pyramid Engine   ║")
     print("╚══════════════════════════════════════════════════════════════╝")
     
     if not os.path.exists(INPUT_H3_PARQUET):
@@ -64,30 +59,30 @@ def generate_3d_map():
         if row is not None:
             res10_counter.update(row)
             
-    data_res8 = [{"hex": cell, "count": count} for cell, count in res8_counter.most_common(200)]
+    data_res8 = [{"hex": cell, "count": count} for cell, count in res8_counter.most_common(250)]
     data_res9 = [{"hex": cell, "count": count} for cell, count in res9_counter.most_common(400)]
     data_res10 = [{"hex": cell, "count": count} for cell, count in res10_counter.most_common(600)]
     
-    print(f"  ✓ Processed Res 8 ({len(res8_counter):,} cells), Res 9 ({len(res9_counter):,} cells), Res 10 ({len(res10_counter):,} cells).")
+    print(f"  ✓ Processed Res 8 ({len(data_res8):,} active cells), Res 9 ({len(data_res9):,} cells), Res 10 ({len(data_res10):,} cells).")
     
-    print("\n3. Building Standalone 3D Deck.gl H3 Elevation Web App (`output/h3_3d_map.html`)...")
+    print("\n3. Building 3D Deck.gl Stacked Hexagon Pyramid Map (`output/h3_3d_map.html`)...")
     
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Porto Taxi Trajectory – 3D H3 Spatial Elevation Map</title>
+    <title>Porto Taxi Trajectory – 3D Stacked H3 Hexagon Pyramid</title>
     <!-- Deck.gl & MapLibre GL -->
-    <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
-    <script src="https://unpkg.com/maplibre-gl@3.0.0/dist/maplibre-gl.js"></script>
-    <link href="https://unpkg.com/maplibre-gl@3.0.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/deck.gl@8.9.0/dist.min.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * {{ box-sizing: border-box; margin: 0; padding: 0; }}
         body {{
             font-family: 'Outfit', sans-serif;
-            background: #0b0f19;
+            background: #090d16;
             color: #f0f4f8;
             overflow: hidden;
             width: 100vw;
@@ -100,19 +95,19 @@ def generate_3d_map():
             top: 20px;
             left: 20px;
             z-index: 10;
-            background: rgba(18, 26, 43, 0.85);
+            background: rgba(15, 23, 42, 0.88);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 16px;
             padding: 1.5rem;
-            width: 320px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            width: 340px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         }}
         
         .panel-title {{
             font-size: 1.25rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #00f2fe, #7f00ff);
+            background: linear-gradient(135deg, #00f2fe, #ff0844);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.4rem;
@@ -125,33 +120,52 @@ def generate_3d_map():
             line-height: 1.4;
         }}
 
-        .btn-group {{
+        .layer-toggle {{
             display: flex;
-            gap: 6px;
-            margin-bottom: 1rem;
-            background: rgba(0,0,0,0.3);
-            padding: 4px;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.04);
+            padding: 10px 12px;
             border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255,255,255,0.06);
         }}
 
-        .res-btn {{
-            flex: 1;
-            padding: 8px 0;
-            border: none;
-            border-radius: 6px;
-            background: transparent;
-            color: #94a3b8;
+        .layer-label {{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
             font-weight: 600;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
         }}
 
-        .res-btn.active {{
-            background: linear-gradient(135deg, #00f2fe, #4facfe);
-            color: #0b0f19;
-            box-shadow: 0 2px 10px rgba(0, 242, 254, 0.3);
+        .color-dot {{
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
         }}
+
+        .dot-res8 {{ background: #00f2fe; box-shadow: 0 0 8px #00f2fe; }}
+        .dot-res9 {{ background: #7f00ff; box-shadow: 0 0 8px #7f00ff; }}
+        .dot-res10 {{ background: #ffd700; box-shadow: 0 0 8px #ffd700; }}
+
+        .switch {{
+            position: relative;
+            display: inline-block;
+            width: 38px;
+            height: 22px;
+        }}
+        .switch input {{ opacity: 0; width: 0; height: 0; }}
+        .slider {{
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #334155; transition: .3s; border-radius: 22px;
+        }}
+        .slider:before {{
+            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+            background-color: white; transition: .3s; border-radius: 50%;
+        }}
+        input:checked + .slider {{ background-color: #00f2fe; }}
+        input:checked + .slider:before {{ transform: translateX(16px); }}
 
         .instruction-box {{
             background: rgba(0, 242, 254, 0.08);
@@ -160,6 +174,7 @@ def generate_3d_map():
             border-radius: 0 8px 8px 0;
             font-size: 0.8rem;
             color: #cbd5e1;
+            margin-top: 1rem;
             line-height: 1.4;
         }}
 
@@ -167,14 +182,14 @@ def generate_3d_map():
             position: absolute;
             z-index: 100;
             pointer-events: none;
-            background: rgba(11, 15, 25, 0.9);
+            background: rgba(11, 15, 25, 0.92);
             border: 1px solid #00f2fe;
             border-radius: 8px;
             padding: 10px 14px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.85rem;
             color: #fff;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
             display: none;
         }}
     </style>
@@ -183,21 +198,47 @@ def generate_3d_map():
     <div id="container"></div>
 
     <div class="control-panel">
-        <div class="panel-title">Porto 3D H3 Elevation Topography</div>
-        <div class="panel-sub">1.62M Taxi Trips Encoded into Extruded 3D Hexagonal Columns</div>
+        <div class="panel-title">3D Stacked H3 Hexagon Pyramid</div>
+        <div class="panel-sub">Porto Taxi Density Topography • Extruded 3D Multi-Layer Hexagonal Columns</div>
 
-        <div style="font-size:0.8rem; font-weight:600; color:#cbd5e1; margin-bottom:6px;">SELECT H3 RESOLUTION:</div>
-        <div class="btn-group">
-            <button class="res-btn active" id="btn-res8" onclick="setResolution(8)">Res 8 (~0.73km²)</button>
-            <button class="res-btn" id="btn-res9" onclick="setResolution(9)">Res 9 (~0.10km²)</button>
-            <button class="res-btn" id="btn-res10" onclick="setResolution(10)">Res 10 (~66m)</button>
+        <div class="layer-toggle">
+            <div class="layer-label">
+                <div class="color-dot dot-res8"></div>
+                Res 8 (Base Layer ~0.73km²)
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="check-res8" checked onchange="updateLayers()">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="layer-toggle">
+            <div class="layer-label">
+                <div class="color-dot dot-res9"></div>
+                Res 9 (Middle Layer ~0.10km²)
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="check-res9" checked onchange="updateLayers()">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="layer-toggle">
+            <div class="layer-label">
+                <div class="color-dot dot-res10"></div>
+                Res 10 (Peak Layer ~66m)
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="check-res10" checked onchange="updateLayers()">
+                <span class="slider"></span>
+            </label>
         </div>
 
         <div class="instruction-box">
-            <strong>🖱️ 3D Controls:</strong><br>
-            • <strong>Ctrl + Drag / Right Click:</strong> Tilt Pitch & Rotate 3D Camera.<br>
+            <strong>🖱️ 3D Camera Controls:</strong><br>
+            • <strong>Ctrl + Drag / Right Click:</strong> Tilt Pitch & Rotate Camera.<br>
             • <strong>Scroll:</strong> Zoom in/out.<br>
-            • <strong>Hover:</strong> Inspect H3 Cell ID & Visit Counts.
+            • <strong>Hover Hexagon:</strong> Inspect H3 Cell ID & Visit Counts.
         </div>
     </div>
 
@@ -208,44 +249,6 @@ def generate_3d_map():
         const dataRes9 = {json.dumps(data_res9)};
         const dataRes10 = {json.dumps(data_res10)};
 
-        let currentRes = 8;
-        let deckgl;
-
-        const maxCountRes8 = dataRes8[0] ? dataRes8[0].count : 1;
-        const maxCountRes9 = dataRes9[0] ? dataRes9[0].count : 1;
-        const maxCountRes10 = dataRes10[0] ? dataRes10[0].count : 1;
-
-        function getColor(count, maxCount) {{
-            const ratio = Math.min(1.0, count / maxCount);
-            if (ratio < 0.25) return [0, 242, 254, 200];    // Cyan
-            if (ratio < 0.60) return [127, 0, 255, 220];   // Electric Violet
-            if (ratio < 0.85) return [255, 8, 68, 230];    // Crimson Red
-            return [255, 215, 0, 255];                     // Glowing Gold
-        }}
-
-        function getLayer(res) {{
-            let dataset, maxCount, scale;
-            if (res === 8) {{ dataset = dataRes8; maxCount = maxCountRes8; scale = 0.08; }}
-            else if (res === 9) {{ dataset = dataRes9; maxCount = maxCountRes9; scale = 0.15; }}
-            else {{ dataset = dataRes10; maxCount = maxCountRes10; scale = 0.40; }}
-
-            return new deck.H3HexagonLayer({{
-                id: 'h3-3d-layer-' + res,
-                data: dataset,
-                pickable: true,
-                wireframe: true,
-                filled: true,
-                extruded: true,
-                elevationScale: scale,
-                getHexagon: d => d.hex,
-                getElevation: d => d.count,
-                getFillColor: d => getColor(d.count, maxCount),
-                getLineColor: [255, 255, 255, 80],
-                lineWidthMinPixels: 1,
-                onHover: updateTooltip
-            }});
-        }}
-
         function updateTooltip(info) {{
             const tooltip = document.getElementById('tooltip');
             if (info.object) {{
@@ -255,37 +258,95 @@ def generate_3d_map():
                 tooltip.innerHTML = `
                     <div style="color:#00f2fe; font-weight:700;">H3 Cell ID: ${{info.object.hex}}</div>
                     <div>Visits: <strong>${{info.object.count.toLocaleString()}}</strong></div>
-                    <div style="font-size:0.75rem; color:#94a3b8;">Resolution: ${{currentRes}}</div>
                 `;
             }} else {{
                 tooltip.style.display = 'none';
             }}
         }}
 
-        function setResolution(res) {{
-            currentRes = res;
-            document.querySelectorAll('.res-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-res' + res).classList.add('active');
+        function getLayers() {{
+            const layers = [];
 
-            deckgl.setProps({{
-                layers: [getLayer(res)]
-            }});
+            // Layer 1: Res 8 Base Layer (Cyan - Wide Footprint)
+            if (document.getElementById('check-res8').checked) {{
+                layers.push(new deck.H3HexagonLayer({{
+                    id: 'layer-h3-res8',
+                    data: dataRes8,
+                    pickable: true,
+                    wireframe: true,
+                    filled: true,
+                    extruded: true,
+                    coverage: 0.92,
+                    elevationScale: 0.12,
+                    getHexagon: d => d.hex,
+                    getElevation: d => d.count,
+                    getFillColor: [0, 242, 254, 160],
+                    getLineColor: [0, 242, 254, 80],
+                    lineWidthMinPixels: 1,
+                    onHover: updateTooltip
+                }}));
+            }}
+
+            // Layer 2: Res 9 Middle Layer (Electric Violet - Inset Footprint Stacked Above)
+            if (document.getElementById('check-res9').checked) {{
+                layers.push(new deck.H3HexagonLayer({{
+                    id: 'layer-h3-res9',
+                    data: dataRes9,
+                    pickable: true,
+                    wireframe: true,
+                    filled: true,
+                    extruded: true,
+                    coverage: 0.82,
+                    elevationScale: 0.25,
+                    getHexagon: d => d.hex,
+                    getElevation: d => d.count,
+                    getFillColor: [127, 0, 255, 210],
+                    getLineColor: [255, 255, 255, 100],
+                    lineWidthMinPixels: 1,
+                    onHover: updateTooltip
+                }}));
+            }}
+
+            // Layer 3: Res 10 Top Layer (Glowing Gold Pinnacle)
+            if (document.getElementById('check-res10').checked) {{
+                layers.push(new deck.H3HexagonLayer({{
+                    id: 'layer-h3-res10',
+                    data: dataRes10,
+                    pickable: true,
+                    wireframe: true,
+                    filled: true,
+                    extruded: true,
+                    coverage: 0.68,
+                    elevationScale: 0.50,
+                    getHexagon: d => d.hex,
+                    getElevation: d => d.count,
+                    getFillColor: [255, 215, 0, 240],
+                    getLineColor: [255, 255, 255, 120],
+                    lineWidthMinPixels: 1,
+                    onHover: updateTooltip
+                }}));
+            }}
+
+            return layers;
         }}
 
-        // Initialize Deck.gl
-        deckgl = new deck.DeckGL({{
+        const deckgl = new deck.DeckGL({{
             container: 'container',
             mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/json',
             initialViewState: {{
                 longitude: -8.6291,
                 latitude: 41.1579,
-                zoom: 12.5,
-                pitch: 52,
-                bearing: 25
+                zoom: 12.8,
+                pitch: 58,
+                bearing: 30
             }},
             controller: true,
-            layers: [getLayer(8)]
+            layers: getLayers()
         }});
+
+        function updateLayers() {{
+            deckgl.setProps({{ layers: getLayers() }});
+        }}
     </script>
 </body>
 </html>
@@ -294,7 +355,7 @@ def generate_3d_map():
     with open(OUTPUT_3D_MAP, "w", encoding="utf-8") as f:
         f.write(html_content)
         
-    print(f"  ✓ Saved 3D Deck.gl Map to {OUTPUT_3D_MAP}")
+    print(f"  ✓ Saved 3D Deck.gl Stacked Map to {OUTPUT_3D_MAP}")
 
 if __name__ == "__main__":
-    generate_3d_map()
+    generate_3d_stacked_map()
