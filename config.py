@@ -10,6 +10,7 @@ All configurable parameters for the project are centralized here.
 LOCAL_DATA_DIR = "data"
 LOCAL_RAW_CSV = f"{LOCAL_DATA_DIR}/train.csv"
 LOCAL_CLEANED_PARQUET = "output/cleaned_trips.parquet"
+LOCAL_H3_PARQUET = "output/h3_encoded_trips.parquet"
 LOCAL_STATS_JSON = "output/cleaning_report.json"
 
 # ──────────────────────────────────────────────
