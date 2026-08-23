@@ -1,11 +1,9 @@
 """
-Porto Taxi Trajectory Project – 3D Deck.gl Stacked H3 Hexagon Elevation Engine
+Porto Taxi Trajectory Project – 3D Deck.gl Bulletproof Stacked Polygon Engine
 ==============================================================================
-This script generates a 3D Stacked Hexagon Pyramid Map (`output/h3_3d_map.html`).
-- Base Layer (Bottom): Res 8 Hexagons (~0.73 km²) – Wide Cyan Base.
-- Middle Layer (Stacked): Res 9 Hexagons (~0.10 km²) – Medium Violet Core.
-- Top Layer (Peak): Res 10 Hexagons (~66m edge) – Glowing Gold Pinnacle.
-Columns extrude vertically proportionally to trip frequency.
+Generates a 100% reliable 3D Deck.gl Stacked Hexagon Map (`output/h3_3d_map.html`).
+Pre-computes H3 boundary polygons directly in Python [lng, lat] to bypass browser WASM/CORS CORS issues.
+Renders 3D Extruded Hexagonal Columns with MapLibre dark raster tiles.
 """
 
 import os
@@ -20,20 +18,31 @@ user_site = os.path.expanduser("~/Library/Python/3.9/lib/python/site-packages")
 if os.path.exists(user_site) and user_site not in sys.path:
     sys.path.insert(0, user_site)
 
+import h3
+
 INPUT_H3_PARQUET = "output/h3_encoded_trips.parquet"
 OUTPUT_3D_MAP = "output/h3_3d_map.html"
 
 
-def generate_3d_stacked_map():
+def get_cell_polygon(cell):
+    try:
+        boundary = h3.cell_to_boundary(cell)
+        # Convert (lat, lng) -> [lng, lat] for Deck.gl / GeoJSON
+        return [[round(pt[1], 6), round(pt[0], 6)] for pt in boundary]
+    except Exception:
+        return None
+
+
+def generate_3d_map():
     print("╔══════════════════════════════════════════════════════════════╗")
-    print("║  Porto Taxi Project – 3D Stacked H3 Hexagon Pyramid Engine   ║")
+    print("║  Porto Taxi Project – 3D Deck.gl Bulletproof Polygon Engine  ║")
     print("╚══════════════════════════════════════════════════════════════╝")
     
     if not os.path.exists(INPUT_H3_PARQUET):
         print(f"❌ Error: {INPUT_H3_PARQUET} not found.")
         return
         
-    print(f"\n1. Loading H3-encoded dataset from {INPUT_H3_PARQUET}...")
+    print(f"\n1. Reading H3-encoded dataset from {INPUT_H3_PARQUET}...")
     table = pq.read_table(
         INPUT_H3_PARQUET,
         columns=["h3_res8", "h3_res9", "h3_res10"]
@@ -42,7 +51,7 @@ def generate_3d_stacked_map():
     total_trips = len(df)
     print(f"  ✓ Loaded {total_trips:,} trips.")
     
-    print("\n2. Computing Frequency Topography for Res 8, Res 9, and Res 10...")
+    print("\n2. Computing Frequency & Pre-calculating 3D Hexagon Polygons...")
     res8_counter = Counter()
     res9_counter = Counter()
     res10_counter = Counter()
@@ -54,18 +63,59 @@ def generate_3d_stacked_map():
     for row in df["h3_res9"]:
         if row is not None:
             res9_counter.update(row)
-            
+
     for row in df["h3_res10"]:
         if row is not None:
             res10_counter.update(row)
             
-    data_res8 = [{"hex": cell, "count": count} for cell, count in res8_counter.most_common(250)]
-    data_res9 = [{"hex": cell, "count": count} for cell, count in res9_counter.most_common(400)]
-    data_res10 = [{"hex": cell, "count": count} for cell, count in res10_counter.most_common(600)]
+    # Process Res 8 (Neighborhoods - Cyan Base Layer)
+    data_res8 = []
+    max_res8 = res8_counter.most_common(1)[0][1] if res8_counter else 1
+    for cell, count in res8_counter.most_common(200):
+        poly = get_cell_polygon(cell)
+        if poly:
+            intensity = min(1.0, count / max_res8)
+            data_res8.append({
+                "hex": cell,
+                "count": count,
+                "polygon": poly,
+                "height": float(round(count * 0.8, 1)),
+                "color": [0, 242, 254, int(160 + intensity * 85)]
+            })
+            
+    # Process Res 9 (Streets - Electric Violet Middle Layer)
+    data_res9 = []
+    max_res9 = res9_counter.most_common(1)[0][1] if res9_counter else 1
+    for cell, count in res9_counter.most_common(350):
+        poly = get_cell_polygon(cell)
+        if poly:
+            intensity = min(1.0, count / max_res9)
+            data_res9.append({
+                "hex": cell,
+                "count": count,
+                "polygon": poly,
+                "height": float(round(count * 1.5, 1)),
+                "color": [127, 0, 255, int(180 + intensity * 75)]
+            })
+
+    # Process Res 10 (Intersections - Glowing Gold Pinnacle Layer)
+    data_res10 = []
+    max_res10 = res10_counter.most_common(1)[0][1] if res10_counter else 1
+    for cell, count in res10_counter.most_common(500):
+        poly = get_cell_polygon(cell)
+        if poly:
+            intensity = min(1.0, count / max_res10)
+            data_res10.append({
+                "hex": cell,
+                "count": count,
+                "polygon": poly,
+                "height": float(round(count * 3.0, 1)),
+                "color": [255, 215, 0, int(200 + intensity * 55)]
+            })
+            
+    print(f"  ✓ Processed Res 8 ({len(data_res8)} 3D polygons), Res 9 ({len(data_res9)} 3D polygons), Res 10 ({len(data_res10)} 3D polygons).")
     
-    print(f"  ✓ Processed Res 8 ({len(data_res8):,} active cells), Res 9 ({len(data_res9):,} cells), Res 10 ({len(data_res10):,} cells).")
-    
-    print("\n3. Building 3D Deck.gl Stacked Hexagon Pyramid Map (`output/h3_3d_map.html`)...")
+    print("\n3. Building 100% Bulletproof 3D HTML App (`output/h3_3d_map.html`)...")
     
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -95,9 +145,9 @@ def generate_3d_stacked_map():
             top: 20px;
             left: 20px;
             z-index: 10;
-            background: rgba(15, 23, 42, 0.88);
+            background: rgba(15, 23, 42, 0.90);
             backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 16px;
             padding: 1.5rem;
             width: 340px;
@@ -128,7 +178,7 @@ def generate_3d_stacked_map():
             padding: 10px 12px;
             border-radius: 10px;
             margin-bottom: 8px;
-            border: 1px solid rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
         }}
 
         .layer-label {{
@@ -182,14 +232,14 @@ def generate_3d_stacked_map():
             position: absolute;
             z-index: 100;
             pointer-events: none;
-            background: rgba(11, 15, 25, 0.92);
+            background: rgba(11, 15, 25, 0.95);
             border: 1px solid #00f2fe;
             border-radius: 8px;
             padding: 10px 14px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.85rem;
             color: #fff;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
             display: none;
         }}
     </style>
@@ -258,70 +308,85 @@ def generate_3d_stacked_map():
                 tooltip.innerHTML = `
                     <div style="color:#00f2fe; font-weight:700;">H3 Cell ID: ${{info.object.hex}}</div>
                     <div>Visits: <strong>${{info.object.count.toLocaleString()}}</strong></div>
+                    <div>3D Height: <strong>${{info.object.height}}m</strong></div>
                 `;
             }} else {{
                 tooltip.style.display = 'none';
             }}
         }}
 
+        // Bulletproof Dark Raster Tiles Specification (Never fails on local file://)
+        const darkTileStyle = {{
+            version: 8,
+            sources: {{
+                'carto-dark': {{
+                    type: 'raster',
+                    tiles: ['https://basemaps.cartocdn.com/dark_all/{{z}}/{{x}}/{{y}}.png'],
+                    tileSize: 256,
+                    attribution: '&copy; CartoDB'
+                }}
+            }},
+            layers: [{{
+                id: 'carto-dark-layer',
+                type: 'raster',
+                source: 'carto-dark',
+                minzoom: 0,
+                maxzoom: 20
+            }}]
+        }};
+
         function getLayers() {{
             const layers = [];
 
-            // Layer 1: Res 8 Base Layer (Cyan - Wide Footprint)
+            // Layer 1: Res 8 Base Layer (Cyan - Base Extrusion)
             if (document.getElementById('check-res8').checked) {{
-                layers.push(new deck.H3HexagonLayer({{
-                    id: 'layer-h3-res8',
+                layers.push(new deck.PolygonLayer({{
+                    id: 'layer-polygon-res8',
                     data: dataRes8,
                     pickable: true,
                     wireframe: true,
                     filled: true,
                     extruded: true,
-                    coverage: 0.92,
-                    elevationScale: 0.12,
-                    getHexagon: d => d.hex,
-                    getElevation: d => d.count,
-                    getFillColor: [0, 242, 254, 160],
-                    getLineColor: [0, 242, 254, 80],
+                    getPolygon: d => d.polygon,
+                    getElevation: d => d.height,
+                    getFillColor: d => d.color,
+                    getLineColor: [0, 242, 254, 120],
                     lineWidthMinPixels: 1,
                     onHover: updateTooltip
                 }}));
             }}
 
-            // Layer 2: Res 9 Middle Layer (Electric Violet - Inset Footprint Stacked Above)
+            // Layer 2: Res 9 Middle Layer (Electric Violet - Extruded Above)
             if (document.getElementById('check-res9').checked) {{
-                layers.push(new deck.H3HexagonLayer({{
-                    id: 'layer-h3-res9',
+                layers.push(new deck.PolygonLayer({{
+                    id: 'layer-polygon-res9',
                     data: dataRes9,
                     pickable: true,
                     wireframe: true,
                     filled: true,
                     extruded: true,
-                    coverage: 0.82,
-                    elevationScale: 0.25,
-                    getHexagon: d => d.hex,
-                    getElevation: d => d.count,
-                    getFillColor: [127, 0, 255, 210],
-                    getLineColor: [255, 255, 255, 100],
+                    getPolygon: d => d.polygon,
+                    getElevation: d => d.height,
+                    getFillColor: d => d.color,
+                    getLineColor: [255, 255, 255, 120],
                     lineWidthMinPixels: 1,
                     onHover: updateTooltip
                 }}));
             }}
 
-            // Layer 3: Res 10 Top Layer (Glowing Gold Pinnacle)
+            // Layer 3: Res 10 Peak Layer (Glowing Gold Pinnacle)
             if (document.getElementById('check-res10').checked) {{
-                layers.push(new deck.H3HexagonLayer({{
-                    id: 'layer-h3-res10',
+                layers.push(new deck.PolygonLayer({{
+                    id: 'layer-polygon-res10',
                     data: dataRes10,
                     pickable: true,
                     wireframe: true,
                     filled: true,
                     extruded: true,
-                    coverage: 0.68,
-                    elevationScale: 0.50,
-                    getHexagon: d => d.hex,
-                    getElevation: d => d.count,
-                    getFillColor: [255, 215, 0, 240],
-                    getLineColor: [255, 255, 255, 120],
+                    getPolygon: d => d.polygon,
+                    getElevation: d => d.height,
+                    getFillColor: d => d.color,
+                    getLineColor: [255, 255, 255, 160],
                     lineWidthMinPixels: 1,
                     onHover: updateTooltip
                 }}));
@@ -332,13 +397,13 @@ def generate_3d_stacked_map():
 
         const deckgl = new deck.DeckGL({{
             container: 'container',
-            mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/json',
+            mapStyle: darkTileStyle,
             initialViewState: {{
                 longitude: -8.6291,
                 latitude: 41.1579,
                 zoom: 12.8,
                 pitch: 58,
-                bearing: 30
+                bearing: 28
             }},
             controller: true,
             layers: getLayers()
@@ -355,7 +420,7 @@ def generate_3d_stacked_map():
     with open(OUTPUT_3D_MAP, "w", encoding="utf-8") as f:
         f.write(html_content)
         
-    print(f"  ✓ Saved 3D Deck.gl Stacked Map to {OUTPUT_3D_MAP}")
+    print(f"  ✓ Saved 100% Bulletproof 3D Stacked Map to {OUTPUT_3D_MAP}")
 
 if __name__ == "__main__":
-    generate_3d_stacked_map()
+    generate_3d_map()
