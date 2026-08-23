@@ -1,0 +1,14 @@
+{
+  "summary": {
+    "final_clean_trips": 1622765,
+    "unique_taxis": 442,
+    "distance_percentiles_km": {
+      "p25": 2.3932,
+      "p50": 3.9579,
+      "p75": 6.3798,
+      "p90": 10.6236,
+      "p95": 13.0512,
+      "p99": 617.4314
+    }
+  }
+}

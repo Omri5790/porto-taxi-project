@@ -1,0 +1,23 @@
+# Large Data Files (Ignore raw CSV and generated Parquet files - GitHub 100MB limit)
+data/train.csv
+data/*.csv
+data/*.zip
+output/*.parquet
+output/**/*.parquet
+
+# Spark & Python Cache
+spark-warehouse/
+.spark-staging/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# OS Files
+.DS_Store
+.vscode/
+.idea/
