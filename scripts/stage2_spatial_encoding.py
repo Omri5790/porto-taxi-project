@@ -79,9 +79,11 @@ def encode_h3_partition(rows):
             
         h3_res8 = []
         h3_res9 = []
+        h3_res10 = []
         
         prev_cell8 = None
         prev_cell9 = None
+        prev_cell10 = None
         
         for pt in coords:
             lat = pt["lat"]
@@ -98,14 +100,22 @@ def encode_h3_partition(rows):
             if cell9 != prev_cell9:
                 h3_res9.append(cell9)
                 prev_cell9 = cell9
+
+            # Resolution 10 (~0.015 km² / 66m edge)
+            cell10 = latlng_to_cell(lat, lng, 10)
+            if cell10 != prev_cell10:
+                h3_res10.append(cell10)
+                prev_cell10 = cell10
                 
-        if not h3_res8 or not h3_res9:
+        if not h3_res8 or not h3_res9 or not h3_res10:
             continue
             
         start_h3_res8 = h3_res8[0]
         end_h3_res8 = h3_res8[-1]
         start_h3_res9 = h3_res9[0]
         end_h3_res9 = h3_res9[-1]
+        start_h3_res10 = h3_res10[0]
+        end_h3_res10 = h3_res10[-1]
         
         yield (
             str(row.TRIP_ID),
@@ -130,12 +140,16 @@ def encode_h3_partition(rows):
             int(row.day_of_week),
             h3_res8,
             h3_res9,
+            h3_res10,
             start_h3_res8,
             end_h3_res8,
             start_h3_res9,
             end_h3_res9,
+            start_h3_res10,
+            end_h3_res10,
             len(h3_res8),
-            len(h3_res9)
+            len(h3_res9),
+            len(h3_res10)
         )
 
 
@@ -144,6 +158,7 @@ def main():
     
     print("╔══════════════════════════════════════════════════════════════╗")
     print("║  Porto Taxi Project – Stage 2: H3 Spatial Encoding Engine    ║")
+    print("║  Resolutions: Res 8 (~0.73km²), Res 9 (~0.10km²), Res 10 (~0.015km²)║")
     print(f"║  Mode: {MODE:<10s}  Full Dataset: {str(not SAMPLE):<6s}                 ║")
     print(f"║  Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'):<20s}                      ║")
     print("╚══════════════════════════════════════════════════════════════╝")
@@ -163,7 +178,7 @@ def main():
         total_input = df_clean.count()
         print(f"  ✓ Loaded {total_input:,} cleaned trips for H3 spatial encoding.")
         
-        print("\nSTEP 2: Encoding trajectories into H3 Res 8 & Res 9 in PySpark mapPartitions...")
+        print("\nSTEP 2: Encoding trajectories into H3 Res 8, Res 9 & Res 10 in PySpark mapPartitions...")
         
         encoded_rdd = df_clean.rdd.mapPartitions(encode_h3_partition)
         
@@ -195,12 +210,16 @@ def main():
             StructField("day_of_week", IntegerType(), True),
             StructField("h3_res8", ArrayType(StringType()), True),
             StructField("h3_res9", ArrayType(StringType()), True),
+            StructField("h3_res10", ArrayType(StringType()), True),
             StructField("start_h3_res8", StringType(), True),
             StructField("end_h3_res8", StringType(), True),
             StructField("start_h3_res9", StringType(), True),
             StructField("end_h3_res9", StringType(), True),
+            StructField("start_h3_res10", StringType(), True),
+            StructField("end_h3_res10", StringType(), True),
             StructField("h3_res8_length", IntegerType(), True),
             StructField("h3_res9_length", IntegerType(), True),
+            StructField("h3_res10_length", IntegerType(), True),
         ])
         
         df_encoded = spark.createDataFrame(encoded_rdd, schema=encoded_schema)
@@ -217,18 +236,21 @@ def main():
         
         unique_h3_res8 = df_saved.select(F.explode("h3_res8").alias("cell")).distinct().count()
         unique_h3_res9 = df_saved.select(F.explode("h3_res9").alias("cell")).distinct().count()
+        unique_h3_res10 = df_saved.select(F.explode("h3_res10").alias("cell")).distinct().count()
         
         print(f"  • Total Clean Trips H3-Encoded: {total_encoded:,}")
         print(f"  • Unique H3 Res 8 Cells Covered in Porto: {unique_h3_res8:,} cells (~0.73 km² each)")
         print(f"  • Unique H3 Res 9 Cells Covered in Porto: {unique_h3_res9:,} cells (~0.10 km² each)")
+        print(f"  • Unique H3 Res 10 Cells Covered in Porto: {unique_h3_res10:,} cells (~0.015 km² / 66m edge)")
         
-        df_saved.select("h3_res8_length", "h3_res9_length").describe().show()
+        df_saved.select("h3_res8_length", "h3_res9_length", "h3_res10_length").describe().show()
         
         h3_report = {
             "summary": {
                 "total_trips_encoded": total_encoded,
                 "unique_h3_res8_cells": unique_h3_res8,
                 "unique_h3_res9_cells": unique_h3_res9,
+                "unique_h3_res10_cells": unique_h3_res10,
                 "timestamp": datetime.now().isoformat()
             }
         }
