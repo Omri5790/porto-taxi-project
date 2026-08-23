@@ -1,11 +1,11 @@
 """
-Porto Taxi Trajectory Project – 3D Cumulative Stepped Pyramid Engine
-======================================================================
-Generates `output/h3_3d_map.html` with TRUE 3D Cumulative Step Stacking:
-- Res 8 (Base Layer): Base elevation Z = 0.
-- Res 9 (Middle Layer): Base elevation Z = Res 8 Parent Height (sits on top of Res 8).
-- Res 10 (Peak Layer): Base elevation Z = Res 8 Height + Res 9 Parent Height (sits on top of Res 9).
-Includes working real-time Deck.gl elevationScale slider (1.0 to 5.0).
+Porto Taxi Trajectory Project – Dynamic 3D Cumulative Stepped Pyramid Engine
+=============================================================================
+Generates `output/h3_3d_map.html` with DYNAMIC 3D Cumulative Step Stacking:
+- Res 8 (Base Layer): Starts at Z = 0.
+- Res 9 (Middle Layer): Dynamically starts at Z = Res 8 Parent Height * currentScale.
+- Res 10 (Peak Layer): Dynamically starts at Z = (Res 8 + Res 9 Parents Height) * currentScale.
+Slider (1.0x to 5.0x) scales BOTH the starting Z offsets AND extrusion heights together in real time!
 """
 
 import os
@@ -29,15 +29,15 @@ OUTPUT_3D_MAP = "output/h3_3d_map.html"
 def get_cell_polygon_3d(cell, base_z):
     try:
         boundary = h3.cell_to_boundary(cell)
-        # Convert (lat, lng) -> [lng, lat, base_z] for 3D Deck.gl GeoJSON
-        return [[round(pt[1], 6), round(pt[0], 6), round(base_z, 1)] for pt in boundary]
+        # Convert (lat, lng) -> [lng, lat, base_z]
+        return [[round(pt[1], 6), round(pt[0], 6), round(base_z, 2)] for pt in boundary]
     except Exception:
         return None
 
 
 def generate_3d_map():
     print("╔══════════════════════════════════════════════════════════════╗")
-    print("║  Porto Taxi Project – 3D Cumulative Stepped Pyramid Engine   ║")
+    print("║  Porto Taxi Project – Dynamic 3D Cumulative Pyramid Engine   ║")
     print("╚══════════════════════════════════════════════════════════════╝")
     
     if not os.path.exists(INPUT_H3_PARQUET):
@@ -53,7 +53,7 @@ def generate_3d_map():
     total_trips = len(df)
     print(f"  ✓ Loaded {total_trips:,} trips.")
     
-    print("\n2. Computing Cumulative Spatial Step Elevations...")
+    print("\n2. Computing Parent-Child Cumulative Spatial Step Elevations...")
     res8_counter = Counter()
     res9_counter = Counter()
     res10_counter = Counter()
@@ -70,17 +70,17 @@ def generate_3d_map():
         if row is not None:
             res10_counter.update(row)
             
-    # Unit scale in meters for 1.0 normalized value
-    UNIT_METERS = 200.0
+    # Base height in meters for 1.0 norm
+    UNIT_METERS = 180.0
     
     # 1. Base Layer: Res 8 (Neighborhoods - Cyan Base at Z = 0)
     data_res8 = []
     res8_height_map = {}
     max_res8 = float(res8_counter.most_common(1)[0][1]) if res8_counter else 1.0
     
-    for cell, count in res8_counter.most_common(200):
+    for cell, count in res8_counter.most_common(250):
         norm_val = round(count / max_res8, 4)  # 0.0 to 1.0
-        h_meters = float(round(norm_val * UNIT_METERS, 1))
+        h_meters = float(round(norm_val * UNIT_METERS, 2))
         res8_height_map[cell] = h_meters
         poly3d = get_cell_polygon_3d(cell, base_z=0.0)
         
@@ -95,14 +95,14 @@ def generate_3d_map():
                 "color": [0, 242, 254, int(150 + norm_val * 90)]
             })
             
-    # 2. Middle Layer: Res 9 (Streets - Electric Violet stacked at Z = Res 8 Parent Height)
+    # 2. Middle Layer: Res 9 (Streets - Electric Violet stacked on Res 8 Parent)
     data_res9 = []
     res9_height_map = {}
     max_res9 = float(res9_counter.most_common(1)[0][1]) if res9_counter else 1.0
     
-    for cell, count in res9_counter.most_common(350):
+    for cell, count in res9_counter.most_common(400):
         norm_val = round(count / max_res9, 4)  # 0.0 to 1.0
-        h_meters = float(round(norm_val * UNIT_METERS, 1))
+        h_meters = float(round(norm_val * UNIT_METERS, 2))
         res9_height_map[cell] = h_meters
         
         # Find parent Res 8 cell height
@@ -121,13 +121,13 @@ def generate_3d_map():
                 "color": [127, 0, 255, int(180 + norm_val * 75)]
             })
 
-    # 3. Peak Layer: Res 10 (Intersections - Glowing Gold stacked at Z = Res 8 Base + Res 9 Middle)
+    # 3. Peak Layer: Res 10 (Intersections - Glowing Gold stacked on Res 9 Parent)
     data_res10 = []
     max_res10 = float(res10_counter.most_common(1)[0][1]) if res10_counter else 1.0
     
-    for cell, count in res10_counter.most_common(500):
+    for cell, count in res10_counter.most_common(600):
         norm_val = round(count / max_res10, 4)  # 0.0 to 1.0
-        h_meters = float(round(norm_val * UNIT_METERS, 1))
+        h_meters = float(round(norm_val * UNIT_METERS, 2))
         
         # Find parent Res 9 and grandparent Res 8 height
         parent_res9 = h3.cell_to_parent(cell, 9)
@@ -135,7 +135,7 @@ def generate_3d_map():
         
         z_res8 = res8_height_map.get(grandparent_res8, 0.0)
         z_res9 = res9_height_map.get(parent_res9, 0.0)
-        base_z = float(round(z_res8 + z_res9, 1))
+        base_z = float(round(z_res8 + z_res9, 2))
         
         poly3d = get_cell_polygon_3d(cell, base_z=base_z)
         if poly3d:
@@ -151,14 +151,14 @@ def generate_3d_map():
             
     print(f"  ✓ Processed Res 8 (Base Z=0), Res 9 (Stacked Z=Res8 Parent), Res 10 (Stacked Z=Res8+Res9 Parents).")
     
-    print("\n3. Building 3D Deck.gl Cumulative Stepped App (`output/h3_3d_map.html`)...")
+    print("\n3. Building Dynamic 3D Deck.gl Cumulative Stepped App (`output/h3_3d_map.html`)...")
     
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Porto Taxi Trajectory – 3D Cumulative Stepped H3 Hexagon Pyramid</title>
+    <title>Porto Taxi Trajectory – Dynamic 3D Cumulative Stepped Pyramid</title>
     <!-- Deck.gl & MapLibre GL -->
     <script src="https://unpkg.com/deck.gl@8.9.0/dist.min.js"></script>
     <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
@@ -306,7 +306,7 @@ def generate_3d_map():
 
     <div class="control-panel">
         <div class="panel-title">3D Cumulative Stepped Pyramid</div>
-        <div class="panel-sub">True 3D Step Stacking: Res 8 Base ➔ Res 9 Middle ➔ Res 10 Pinnacle</div>
+        <div class="panel-sub">Dynamic Step Stacking (Base Z & Extrusion Heights Scale Together)</div>
 
         <div class="layer-toggle">
             <div class="layer-label">
@@ -343,7 +343,7 @@ def generate_3d_map():
 
         <div class="slider-container">
             <div class="slider-title">
-                <span>3D Height Extrusion Multiplier</span>
+                <span>3D Height Scale (1x to 5x)</span>
                 <span id="scale-val">1.0x</span>
             </div>
             <input type="range" id="height-scale" min="1.0" max="5.0" step="0.1" value="1.0" oninput="updateHeightScale(this.value)">
@@ -376,7 +376,7 @@ def generate_3d_map():
                     <div style="color:#00f2fe; font-weight:700;">H3 Cell ID: ${{info.object.hex}}</div>
                     <div>Visits: <strong>${{info.object.count.toLocaleString()}}</strong></div>
                     <div>Norm Height: <strong>${{info.object.norm}} / 1.00</strong></div>
-                    <div>Base Offset Z: <strong>${{info.object.base_z}}m</strong></div>
+                    <div>Current Base Z: <strong>${{(info.object.base_z * currentScale).toFixed(1)}}m</strong></div>
                 `;
             }} else {{
                 tooltip.style.display = 'none';
@@ -425,7 +425,7 @@ def generate_3d_map():
                 }}));
             }}
 
-            // Layer 2: Res 9 Middle Layer (Base Z = Res 8 Parent Height)
+            // Layer 2: Res 9 Middle Layer (Dynamically stacked at Base Z = parent_z * currentScale)
             if (document.getElementById('check-res9').checked) {{
                 layers.push(new deck.PolygonLayer({{
                     id: 'layer-polygon-res9',
@@ -435,7 +435,7 @@ def generate_3d_map():
                     filled: true,
                     extruded: true,
                     elevationScale: currentScale,
-                    getPolygon: d => d.polygon,
+                    getPolygon: d => d.polygon.map(pt => [pt[0], pt[1], pt[2] * currentScale]),
                     getElevation: d => d.height,
                     getFillColor: d => d.color,
                     getLineColor: [255, 255, 255, 120],
@@ -444,7 +444,7 @@ def generate_3d_map():
                 }}));
             }}
 
-            // Layer 3: Res 10 Peak Layer (Base Z = Res 8 + Res 9 Parents Height)
+            // Layer 3: Res 10 Peak Layer (Dynamically stacked at Base Z = parents_z * currentScale)
             if (document.getElementById('check-res10').checked) {{
                 layers.push(new deck.PolygonLayer({{
                     id: 'layer-polygon-res10',
@@ -454,7 +454,7 @@ def generate_3d_map():
                     filled: true,
                     extruded: true,
                     elevationScale: currentScale,
-                    getPolygon: d => d.polygon,
+                    getPolygon: d => d.polygon.map(pt => [pt[0], pt[1], pt[2] * currentScale]),
                     getElevation: d => d.height,
                     getFillColor: d => d.color,
                     getLineColor: [255, 255, 255, 160],
@@ -486,7 +486,7 @@ def generate_3d_map():
 
         function updateHeightScale(val) {{
             currentScale = parseFloat(val);
-            document.getElementById('scale-val').innerText = parseFloat(val).toFixed(1) + 'x';
+            document.getElementById('scale-val').innerText = currentScale.toFixed(1) + 'x';
             updateLayers();
         }}
     </script>
@@ -497,7 +497,7 @@ def generate_3d_map():
     with open(OUTPUT_3D_MAP, "w", encoding="utf-8") as f:
         f.write(html_content)
         
-    print(f"  ✓ Saved 3D Cumulative Stepped Map to {OUTPUT_3D_MAP}")
+    print(f"  ✓ Saved Dynamic 3D Cumulative Stepped Map to {OUTPUT_3D_MAP}")
 
 if __name__ == "__main__":
     generate_3d_map()
