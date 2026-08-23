@@ -1,9 +1,11 @@
 """
-Porto Taxi Trajectory Project – Normalized 3D Stacked H3 Hexagon Pyramid Engine
-================================================================================
-Generates `output/h3_3d_map.html` with Min-Max Height Normalization (0.0 to 1.0 per layer).
-Each resolution layer (Res 8, Res 9, Res 10) contributes at most 1 unit (scaled cleanly),
-capping total stacked pyramid height to exactly 3 units max. Includes real-time height slider.
+Porto Taxi Trajectory Project – 3D Cumulative Stepped Pyramid Engine
+======================================================================
+Generates `output/h3_3d_map.html` with TRUE 3D Cumulative Step Stacking:
+- Res 8 (Base Layer): Base elevation Z = 0.
+- Res 9 (Middle Layer): Base elevation Z = Res 8 Parent Height (sits on top of Res 8).
+- Res 10 (Peak Layer): Base elevation Z = Res 8 Height + Res 9 Parent Height (sits on top of Res 9).
+Includes working real-time Deck.gl elevationScale slider (1.0 to 5.0).
 """
 
 import os
@@ -24,17 +26,18 @@ INPUT_H3_PARQUET = "output/h3_encoded_trips.parquet"
 OUTPUT_3D_MAP = "output/h3_3d_map.html"
 
 
-def get_cell_polygon(cell):
+def get_cell_polygon_3d(cell, base_z):
     try:
         boundary = h3.cell_to_boundary(cell)
-        return [[round(pt[1], 6), round(pt[0], 6)] for pt in boundary]
+        # Convert (lat, lng) -> [lng, lat, base_z] for 3D Deck.gl GeoJSON
+        return [[round(pt[1], 6), round(pt[0], 6), round(base_z, 1)] for pt in boundary]
     except Exception:
         return None
 
 
 def generate_3d_map():
     print("╔══════════════════════════════════════════════════════════════╗")
-    print("║  Porto Taxi Project – Normalized 3D Stacked Pyramid Engine   ║")
+    print("║  Porto Taxi Project – 3D Cumulative Stepped Pyramid Engine   ║")
     print("╚══════════════════════════════════════════════════════════════╝")
     
     if not os.path.exists(INPUT_H3_PARQUET):
@@ -50,7 +53,7 @@ def generate_3d_map():
     total_trips = len(df)
     print(f"  ✓ Loaded {total_trips:,} trips.")
     
-    print("\n2. Computing Min-Max Normalized Heights (0.0 to 1.0 per layer)...")
+    print("\n2. Computing Cumulative Spatial Step Elevations...")
     res8_counter = Counter()
     res9_counter = Counter()
     res10_counter = Counter()
@@ -67,67 +70,95 @@ def generate_3d_map():
         if row is not None:
             res10_counter.update(row)
             
-    # Scale multiplier for visual 3D extrusion (1 unit = 250 meters in 3D world space)
-    UNIT_METERS = 250.0
-            
-    # Process Res 8 (Neighborhoods - Cyan Base Layer: Norm 0.0 to 1.0)
+    # Unit scale in meters for 1.0 normalized value
+    UNIT_METERS = 200.0
+    
+    # 1. Base Layer: Res 8 (Neighborhoods - Cyan Base at Z = 0)
     data_res8 = []
+    res8_height_map = {}
     max_res8 = float(res8_counter.most_common(1)[0][1]) if res8_counter else 1.0
+    
     for cell, count in res8_counter.most_common(200):
-        poly = get_cell_polygon(cell)
-        if poly:
-            norm_val = round(count / max_res8, 4)  # 0.0 to 1.0
+        norm_val = round(count / max_res8, 4)  # 0.0 to 1.0
+        h_meters = float(round(norm_val * UNIT_METERS, 1))
+        res8_height_map[cell] = h_meters
+        poly3d = get_cell_polygon_3d(cell, base_z=0.0)
+        
+        if poly3d:
             data_res8.append({
                 "hex": cell,
                 "count": count,
                 "norm": norm_val,
-                "polygon": poly,
-                "height": float(round(norm_val * UNIT_METERS, 1)),
+                "polygon": poly3d,
+                "height": h_meters,
+                "base_z": 0.0,
                 "color": [0, 242, 254, int(150 + norm_val * 90)]
             })
             
-    # Process Res 9 (Streets - Electric Violet Middle Layer: Norm 0.0 to 1.0)
+    # 2. Middle Layer: Res 9 (Streets - Electric Violet stacked at Z = Res 8 Parent Height)
     data_res9 = []
+    res9_height_map = {}
     max_res9 = float(res9_counter.most_common(1)[0][1]) if res9_counter else 1.0
+    
     for cell, count in res9_counter.most_common(350):
-        poly = get_cell_polygon(cell)
-        if poly:
-            norm_val = round(count / max_res9, 4)  # 0.0 to 1.0
+        norm_val = round(count / max_res9, 4)  # 0.0 to 1.0
+        h_meters = float(round(norm_val * UNIT_METERS, 1))
+        res9_height_map[cell] = h_meters
+        
+        # Find parent Res 8 cell height
+        parent_res8 = h3.cell_to_parent(cell, 8)
+        base_z = res8_height_map.get(parent_res8, 0.0)
+        
+        poly3d = get_cell_polygon_3d(cell, base_z=base_z)
+        if poly3d:
             data_res9.append({
                 "hex": cell,
                 "count": count,
                 "norm": norm_val,
-                "polygon": poly,
-                "height": float(round(norm_val * UNIT_METERS, 1)),
-                "color": [127, 0, 255, int(170 + norm_val * 80)]
+                "polygon": poly3d,
+                "height": h_meters,
+                "base_z": base_z,
+                "color": [127, 0, 255, int(180 + norm_val * 75)]
             })
 
-    # Process Res 10 (Intersections - Glowing Gold Pinnacle Layer: Norm 0.0 to 1.0)
+    # 3. Peak Layer: Res 10 (Intersections - Glowing Gold stacked at Z = Res 8 Base + Res 9 Middle)
     data_res10 = []
     max_res10 = float(res10_counter.most_common(1)[0][1]) if res10_counter else 1.0
+    
     for cell, count in res10_counter.most_common(500):
-        poly = get_cell_polygon(cell)
-        if poly:
-            norm_val = round(count / max_res10, 4)  # 0.0 to 1.0
+        norm_val = round(count / max_res10, 4)  # 0.0 to 1.0
+        h_meters = float(round(norm_val * UNIT_METERS, 1))
+        
+        # Find parent Res 9 and grandparent Res 8 height
+        parent_res9 = h3.cell_to_parent(cell, 9)
+        grandparent_res8 = h3.cell_to_parent(cell, 8)
+        
+        z_res8 = res8_height_map.get(grandparent_res8, 0.0)
+        z_res9 = res9_height_map.get(parent_res9, 0.0)
+        base_z = float(round(z_res8 + z_res9, 1))
+        
+        poly3d = get_cell_polygon_3d(cell, base_z=base_z)
+        if poly3d:
             data_res10.append({
                 "hex": cell,
                 "count": count,
                 "norm": norm_val,
-                "polygon": poly,
-                "height": float(round(norm_val * UNIT_METERS, 1)),
-                "color": [255, 215, 0, int(190 + norm_val * 65)]
+                "polygon": poly3d,
+                "height": h_meters,
+                "base_z": base_z,
+                "color": [255, 215, 0, int(200 + norm_val * 55)]
             })
             
-    print(f"  ✓ Processed Res 8 (Max: {int(max_res8):,} visits -> 1.0 norm), Res 9 (Max: {int(max_res9):,} -> 1.0 norm), Res 10 (Max: {int(max_res10):,} -> 1.0 norm).")
+    print(f"  ✓ Processed Res 8 (Base Z=0), Res 9 (Stacked Z=Res8 Parent), Res 10 (Stacked Z=Res8+Res9 Parents).")
     
-    print("\n3. Building Normalized 3D HTML Pyramid App (`output/h3_3d_map.html`)...")
+    print("\n3. Building 3D Deck.gl Cumulative Stepped App (`output/h3_3d_map.html`)...")
     
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Porto Taxi Trajectory – Normalized 3D Stacked H3 Hexagon Pyramid</title>
+    <title>Porto Taxi Trajectory – 3D Cumulative Stepped H3 Hexagon Pyramid</title>
     <!-- Deck.gl & MapLibre GL -->
     <script src="https://unpkg.com/deck.gl@8.9.0/dist.min.js"></script>
     <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
@@ -240,6 +271,7 @@ def generate_3d_map():
         input[type=range] {{
             width: 100%;
             accent-color: #00f2fe;
+            cursor: pointer;
         }}
 
         .instruction-box {{
@@ -273,13 +305,13 @@ def generate_3d_map():
     <div id="container"></div>
 
     <div class="control-panel">
-        <div class="panel-title">3D Stacked H3 Hexagon Pyramid</div>
-        <div class="panel-sub">Min-Max Normalized Elevation (0.0 – 1.0 per layer, Max 3.0 units total)</div>
+        <div class="panel-title">3D Cumulative Stepped Pyramid</div>
+        <div class="panel-sub">True 3D Step Stacking: Res 8 Base ➔ Res 9 Middle ➔ Res 10 Pinnacle</div>
 
         <div class="layer-toggle">
             <div class="layer-label">
                 <div class="color-dot dot-res8"></div>
-                Res 8 (Base Layer 0.0-1.0)
+                Res 8 Base Layer (Z = 0)
             </div>
             <label class="switch">
                 <input type="checkbox" id="check-res8" checked onchange="updateLayers()">
@@ -290,7 +322,7 @@ def generate_3d_map():
         <div class="layer-toggle">
             <div class="layer-label">
                 <div class="color-dot dot-res9"></div>
-                Res 9 (Middle Layer 0.0-1.0)
+                Res 9 Middle (Stacked on Res 8)
             </div>
             <label class="switch">
                 <input type="checkbox" id="check-res9" checked onchange="updateLayers()">
@@ -301,7 +333,7 @@ def generate_3d_map():
         <div class="layer-toggle">
             <div class="layer-label">
                 <div class="color-dot dot-res10"></div>
-                Res 10 (Peak Layer 0.0-1.0)
+                Res 10 Peak (Stacked on Res 9)
             </div>
             <label class="switch">
                 <input type="checkbox" id="check-res10" checked onchange="updateLayers()">
@@ -311,17 +343,17 @@ def generate_3d_map():
 
         <div class="slider-container">
             <div class="slider-title">
-                <span>3D Height Extrusion Scale</span>
+                <span>3D Height Extrusion Multiplier</span>
                 <span id="scale-val">1.0x</span>
             </div>
-            <input type="range" id="height-scale" min="0.2" max="2.5" step="0.1" value="1.0" oninput="updateHeightScale(this.value)">
+            <input type="range" id="height-scale" min="1.0" max="5.0" step="0.1" value="1.0" oninput="updateHeightScale(this.value)">
         </div>
 
         <div class="instruction-box">
             <strong>🖱️ 3D Camera Controls:</strong><br>
             • <strong>Ctrl + Drag / Right Click:</strong> Tilt Pitch & Rotate Camera.<br>
             • <strong>Scroll:</strong> Zoom in/out.<br>
-            • <strong>Hover Hexagon:</strong> Inspect Cell ID, Visits & Normalized Height.
+            • <strong>Hover Hexagon:</strong> Inspect Cell ID, Visits & Base Height.
         </div>
     </div>
 
@@ -343,7 +375,8 @@ def generate_3d_map():
                 tooltip.innerHTML = `
                     <div style="color:#00f2fe; font-weight:700;">H3 Cell ID: ${{info.object.hex}}</div>
                     <div>Visits: <strong>${{info.object.count.toLocaleString()}}</strong></div>
-                    <div>Normalized Height: <strong>${{info.object.norm}} / 1.00</strong></div>
+                    <div>Norm Height: <strong>${{info.object.norm}} / 1.00</strong></div>
+                    <div>Base Offset Z: <strong>${{info.object.base_z}}m</strong></div>
                 `;
             }} else {{
                 tooltip.style.display = 'none';
@@ -373,7 +406,7 @@ def generate_3d_map():
         function getLayers() {{
             const layers = [];
 
-            // Layer 1: Res 8 Base Layer (0.0 to 1.0)
+            // Layer 1: Res 8 Base Layer (Z = 0)
             if (document.getElementById('check-res8').checked) {{
                 layers.push(new deck.PolygonLayer({{
                     id: 'layer-polygon-res8',
@@ -382,8 +415,9 @@ def generate_3d_map():
                     wireframe: true,
                     filled: true,
                     extruded: true,
+                    elevationScale: currentScale,
                     getPolygon: d => d.polygon,
-                    getElevation: d => d.height * currentScale,
+                    getElevation: d => d.height,
                     getFillColor: d => d.color,
                     getLineColor: [0, 242, 254, 120],
                     lineWidthMinPixels: 1,
@@ -391,7 +425,7 @@ def generate_3d_map():
                 }}));
             }}
 
-            // Layer 2: Res 9 Middle Layer (0.0 to 1.0)
+            // Layer 2: Res 9 Middle Layer (Base Z = Res 8 Parent Height)
             if (document.getElementById('check-res9').checked) {{
                 layers.push(new deck.PolygonLayer({{
                     id: 'layer-polygon-res9',
@@ -400,8 +434,9 @@ def generate_3d_map():
                     wireframe: true,
                     filled: true,
                     extruded: true,
+                    elevationScale: currentScale,
                     getPolygon: d => d.polygon,
-                    getElevation: d => d.height * currentScale,
+                    getElevation: d => d.height,
                     getFillColor: d => d.color,
                     getLineColor: [255, 255, 255, 120],
                     lineWidthMinPixels: 1,
@@ -409,7 +444,7 @@ def generate_3d_map():
                 }}));
             }}
 
-            // Layer 3: Res 10 Peak Layer (0.0 to 1.0)
+            // Layer 3: Res 10 Peak Layer (Base Z = Res 8 + Res 9 Parents Height)
             if (document.getElementById('check-res10').checked) {{
                 layers.push(new deck.PolygonLayer({{
                     id: 'layer-polygon-res10',
@@ -418,8 +453,9 @@ def generate_3d_map():
                     wireframe: true,
                     filled: true,
                     extruded: true,
+                    elevationScale: currentScale,
                     getPolygon: d => d.polygon,
-                    getElevation: d => d.height * currentScale,
+                    getElevation: d => d.height,
                     getFillColor: d => d.color,
                     getLineColor: [255, 255, 255, 160],
                     lineWidthMinPixels: 1,
@@ -437,7 +473,7 @@ def generate_3d_map():
                 longitude: -8.6291,
                 latitude: 41.1579,
                 zoom: 13.0,
-                pitch: 55,
+                pitch: 58,
                 bearing: 25
             }},
             controller: true,
@@ -450,7 +486,7 @@ def generate_3d_map():
 
         function updateHeightScale(val) {{
             currentScale = parseFloat(val);
-            document.getElementById('scale-val').innerText = val + 'x';
+            document.getElementById('scale-val').innerText = parseFloat(val).toFixed(1) + 'x';
             updateLayers();
         }}
     </script>
@@ -461,7 +497,7 @@ def generate_3d_map():
     with open(OUTPUT_3D_MAP, "w", encoding="utf-8") as f:
         f.write(html_content)
         
-    print(f"  ✓ Saved Normalized 3D Stacked Map to {OUTPUT_3D_MAP}")
+    print(f"  ✓ Saved 3D Cumulative Stepped Map to {OUTPUT_3D_MAP}")
 
 if __name__ == "__main__":
     generate_3d_map()
