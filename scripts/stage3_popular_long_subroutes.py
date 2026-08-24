@@ -34,7 +34,10 @@ from pyspark.sql.types import (
 )
 from pyspark.ml.feature import MinHashLSH, CountVectorizer
 
-INPUT_H3_PARQUET = "output/h3_encoded_trips.parquet"
+import argparse
+
+INPUT_H3_PARQUET_LOCAL = "output/h3_encoded_trips.parquet"
+INPUT_H3_PARQUET_GCS = "gs://porto-taxi-project-bf990986/data/h3_encoded_trips.parquet"
 OUTPUT_SUBROUTES_100_JSON = "output/popular_long_subroutes_100.json"
 OUTPUT_BENCHMARK_REPORT = "output/stage3_benchmark_report.json"
 
@@ -242,9 +245,20 @@ def main():
     spark = create_spark_session()
     spark.sparkContext.setLogLevel("WARN")
     
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input_path", type=str, default=None)
+    args, _ = parser.parse_known_args()
+    
+    input_path = args.input_path
+    if not input_path:
+        if os.path.exists(INPUT_H3_PARQUET_LOCAL):
+            input_path = INPUT_H3_PARQUET_LOCAL
+        else:
+            input_path = INPUT_H3_PARQUET_GCS
+            
     try:
-        print(f"\nSTEP 1: Reading H3-encoded dataset from {INPUT_H3_PARQUET}...")
-        df_h3 = spark.read.parquet(INPUT_H3_PARQUET)
+        print(f"\nSTEP 1: Reading H3-encoded dataset from {input_path}...")
+        df_h3 = spark.read.parquet(input_path)
         total_input = df_h3.count()
         print(f"  ✓ Loaded {total_input:,} trips.")
         
