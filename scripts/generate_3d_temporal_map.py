@@ -2,6 +2,7 @@
 Porto Taxi Trajectory Project – 3D Temporal Dynamic Mountain Ridge Engine
 ===========================================================================
 Generates `output/h3_3d_temporal_map.html` with:
+- ☀️ All-Day Overview (All 1.62M trips top corridors)
 - 🌅 Morning Rush (07:00 - 10:00) 3D Corridors
 - 🌇 Evening Rush (16:00 - 19:00) 3D Corridors
 - 🌙 Nightlife Dynamics (23:00 - 04:00) 3D Corridors
@@ -24,6 +25,7 @@ if os.path.exists(user_site) and user_site not in sys.path:
 import h3
 
 INPUT_TEMPORAL_JSON = "output/temporal_subroutes.json"
+INPUT_SUBROUTES_JSON = "output/top_20_subroutes.json"
 INPUT_H3_PARQUET = "output/h3_encoded_trips.parquet"
 OUTPUT_TEMPORAL_MAP = "output/h3_3d_temporal_map.html"
 
@@ -48,7 +50,12 @@ def generate_3d_temporal_map():
     with open(INPUT_TEMPORAL_JSON, "r", encoding="utf-8") as f:
         temporal_subroutes = json.load(f)
         
-    print("\n1. Loading H3-encoded dataset for base density...")
+    raw_allday = []
+    if os.path.exists(INPUT_SUBROUTES_JSON):
+        with open(INPUT_SUBROUTES_JSON, "r", encoding="utf-8") as f:
+            raw_allday = json.load(f)
+            
+    print("\n1. Loading H3-encoded dataset for 100% full dataset base density...")
     table = pq.read_table(
         INPUT_H3_PARQUET,
         columns=["h3_res8", "h3_res9", "h3_res10"]
@@ -141,12 +148,34 @@ def generate_3d_temporal_map():
             })
             
     # Process Temporal Sub-Routes
-    temporal_paths = {"morning": [], "evening": [], "night": []}
+    temporal_paths = {"allday": [], "morning": [], "evening": [], "night": []}
     colors_window = {
+        "allday": [255, 215, 0],   # Gold for All Day
         "morning": [0, 242, 254],   # Cyan for Morning
         "evening": [255, 145, 0],   # Orange for Evening
         "night": [255, 8, 68]       # Crimson for Night
     }
+    
+    # Process All-Day Top 20
+    for idx, sr in enumerate(raw_allday):
+        coords = sr.get("cell_coordinates", [])
+        if len(coords) < 2:
+            continue
+        path_3d = []
+        for pt in coords:
+            cell_id = pt["cell"]
+            parent_res8 = h3.cell_to_parent(cell_id, 8)
+            z_offset = res8_height_map.get(parent_res8, 0.0) + res9_height_map.get(cell_id, 40.0)
+            path_3d.append([round(pt["lng"], 6), round(pt["lat"], 6), round(z_offset + 35.0, 2)])
+        temporal_paths["allday"].append({
+            "rank": idx + 1,
+            "window": "allday",
+            "support": sr["trip_support"],
+            "speed": sr["avg_speed_kmh"],
+            "duration": sr["avg_duration_sec"],
+            "path": path_3d,
+            "color": colors_window["allday"]
+        })
     
     for w in ["morning", "evening", "night"]:
         sub_list = temporal_subroutes.get(w, [])
@@ -172,7 +201,7 @@ def generate_3d_temporal_map():
                 "color": colors_window[w]
             })
             
-    print(f"\n2. Processed 3D Temporal Paths: Morning ({len(temporal_paths['morning'])}), Evening ({len(temporal_paths['evening'])}), Night ({len(temporal_paths['night'])}).")
+    print(f"\n2. Processed 3D Temporal Paths: All-Day ({len(temporal_paths['allday'])}), Morning ({len(temporal_paths['morning'])}), Evening ({len(temporal_paths['evening'])}), Night ({len(temporal_paths['night'])}).")
     
     print(f"\n3. Building 3D Temporal Dynamic Web App (`{OUTPUT_TEMPORAL_MAP}`)...")
     
@@ -209,7 +238,7 @@ def generate_3d_temporal_map():
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 16px;
             padding: 1.5rem;
-            width: 370px;
+            width: 380px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.6);
         }}
         
@@ -231,8 +260,8 @@ def generate_3d_temporal_map():
 
         .window-selector {{
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
             margin-bottom: 1.2rem;
             background: rgba(0,0,0,0.3);
             padding: 4px;
@@ -240,19 +269,25 @@ def generate_3d_temporal_map():
         }}
 
         .win-btn {{
-            padding: 10px 0;
+            padding: 8px 0;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             background: transparent;
             color: #94a3b8;
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
+        }}
+
+        .win-btn.active.allday {{
+            background: linear-gradient(135deg, #ffd700, #ff9100);
+            color: #0b0f19;
+            box-shadow: 0 2px 12px rgba(255, 215, 0, 0.4);
         }}
 
         .win-btn.active.morning {{
@@ -373,21 +408,25 @@ def generate_3d_temporal_map():
 
     <div class="control-panel">
         <div class="panel-title">3D Temporal Dynamic Mining</div>
-        <div class="panel-sub">Select Time Window to Morph 3D Traffic Corridors Across Porto</div>
+        <div class="panel-sub">Aggregating 100% of 1.62M Trips • Filter by Time Windows</div>
 
         <div style="font-size:0.8rem; font-weight:600; color:#cbd5e1; margin-bottom:6px;">SELECT TIME WINDOW:</div>
         <div class="window-selector">
-            <button class="win-btn active morning" id="btn-morning" onclick="setWindow('morning')">
+            <button class="win-btn active allday" id="btn-allday" onclick="setWindow('allday')">
+                <span>☀️ All Day</span>
+                <span style="font-size:0.65rem; opacity:0.8;">1.62M Trips</span>
+            </button>
+            <button class="win-btn morning" id="btn-morning" onclick="setWindow('morning')">
                 <span>🌅 Morning</span>
-                <span style="font-size:0.7rem; opacity:0.8;">07:00–10:00</span>
+                <span style="font-size:0.65rem; opacity:0.8;">07:00–10:00</span>
             </button>
             <button class="win-btn evening" id="btn-evening" onclick="setWindow('evening')">
                 <span>🌇 Evening</span>
-                <span style="font-size:0.7rem; opacity:0.8;">16:00–19:00</span>
+                <span style="font-size:0.65rem; opacity:0.8;">16:00–19:00</span>
             </button>
             <button class="win-btn night" id="btn-night" onclick="setWindow('night')">
                 <span>🌙 Night</span>
-                <span style="font-size:0.7rem; opacity:0.8;">23:00–04:00</span>
+                <span style="font-size:0.65rem; opacity:0.8;">23:00–04:00</span>
             </button>
         </div>
 
@@ -448,7 +487,7 @@ def generate_3d_temporal_map():
         const dataRes10 = {json.dumps(data_res10)};
         const temporalPaths = {json.dumps(temporal_paths)};
 
-        let currentWindow = 'morning';
+        let currentWindow = 'allday';
         let currentScale = 1.0;
 
         function updateTooltip(info) {{
