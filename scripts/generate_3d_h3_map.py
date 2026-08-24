@@ -1,10 +1,11 @@
 """
-Porto Taxi Trajectory Project – 3D Stacked Pyramid + Top 20 Sub-Routes Engine
-=============================================================================
+Porto Taxi Trajectory Project – 3D Stacked Pyramid + 100 Popular Long Sub-Routes Engine
+========================================================================================
 Generates `output/h3_3d_map.html` with:
 1. Res 8, Res 9, Res 10 3D Cumulative Stepped Hexagon Pyramids.
-2. Top 20 Mined Active Corridors rendered as an OPTIONAL 3D Path Layer (`PathLayer`).
-   Floating glowing 3D trajectories connecting cells across Porto!
+2. 100 Mined Popular Long Sub-Routes rendered as an OPTIONAL 3D Path Layer (`PathLayer`).
+   Floating glowing 3D trajectories connecting H3 spatial cells across Porto!
+3. Interactive Distance Threshold Filters (All 100, ≥1km, ≥3km, ≥5km, ≥10km, ≥20km, ≥40km).
 """
 
 import os
@@ -22,7 +23,8 @@ if os.path.exists(user_site) and user_site not in sys.path:
 import h3
 
 INPUT_H3_PARQUET = "output/h3_encoded_trips.parquet"
-INPUT_SUBROUTES_JSON = "output/top_20_subroutes.json"
+INPUT_100_SUBROUTES_JSON = "output/popular_long_subroutes_100.json"
+INPUT_TOP20_SUBROUTES_JSON = "output/top_20_subroutes.json"
 OUTPUT_3D_MAP = "output/h3_3d_map.html"
 
 
@@ -36,7 +38,7 @@ def get_cell_polygon_3d(cell, base_z):
 
 def generate_3d_map():
     print("╔══════════════════════════════════════════════════════════════╗")
-    print("║  Porto Taxi Project – 3D Pyramid + Top 20 Sub-Routes Engine  ║")
+    print("║  Porto Taxi Project – 3D Pyramid + 100 Sub-Routes Engine     ║")
     print("╚══════════════════════════════════════════════════════════════╝")
     
     if not os.path.exists(INPUT_H3_PARQUET):
@@ -99,13 +101,13 @@ def generate_3d_map():
     res9_height_map = {}
     max_res9 = float(res9_counter.most_common(1)[0][1]) if res9_counter else 1.0
     
-    for cell, count in res9_counter.most_common(400):
+    for cell, count in res9_counter.most_common(500):
         norm_val = round(count / max_res9, 4)
         h_meters = float(round(norm_val * UNIT_METERS, 2))
         res9_height_map[cell] = h_meters
         
         parent_res8 = h3.cell_to_parent(cell, 8)
-        base_z = res8_height_map.get(parent_res8, 0.0)
+        base_z = float(round(res8_height_map.get(parent_res8, 0.0), 2))
         
         poly3d = get_cell_polygon_3d(cell, base_z=base_z)
         if poly3d:
@@ -116,7 +118,7 @@ def generate_3d_map():
                 "polygon": poly3d,
                 "height": h_meters,
                 "base_z": base_z,
-                "color": [127, 0, 255, int(180 + norm_val * 75)]
+                "color": [127, 0, 255, int(170 + norm_val * 70)]
             })
 
     # 3. Peak Layer: Res 10
@@ -148,64 +150,57 @@ def generate_3d_map():
                 "color": [255, 215, 0, int(200 + norm_val * 55)]
             })
             
-    # 4. Load Top 20 Sub-Routes for 3D Path Layer
-    data_subroutes = []
-    if os.path.exists(INPUT_SUBROUTES_JSON):
-        with open(INPUT_SUBROUTES_JSON, "r", encoding="utf-8") as f:
-            raw_subroutes = json.load(f)
+    # 4. Load 100 Popular Long Sub-Routes for 3D Path Layer
+    data_subroutes_100 = []
+    colors_rgb = [
+        [255, 8, 68], [0, 242, 254], [0, 230, 118], [255, 215, 0],
+        [127, 0, 255], [255, 145, 0], [224, 64, 251], [56, 189, 248],
+        [52, 211, 153], [244, 63, 94], [251, 191, 36], [167, 139, 250],
+        [45, 212, 191], [251, 113, 133], [129, 140, 248], [74, 222, 128],
+        [250, 204, 21], [56, 189, 248], [192, 132, 252], [248, 113, 113]
+    ]
+    
+    if os.path.exists(INPUT_100_SUBROUTES_JSON):
+        with open(INPUT_100_SUBROUTES_JSON, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+            raw_100 = payload.get("master_top100", [])
             
-        colors_rgb = [
-            [255, 8, 68], [0, 242, 254], [0, 230, 118], [255, 215, 0],
-            [127, 0, 255], [255, 145, 0], [224, 64, 251], [56, 189, 248],
-            [52, 211, 153], [244, 63, 94], [251, 191, 36], [167, 139, 250],
-            [45, 212, 191], [251, 113, 133], [129, 140, 248], [74, 222, 128],
-            [250, 204, 21], [56, 189, 248], [192, 132, 252], [248, 113, 113]
-        ]
-        
-        for idx, sr in enumerate(raw_subroutes):
+        for idx, sr in enumerate(raw_100):
             coords = sr.get("cell_coordinates", [])
-            h3_seq = sr.get("h3_sequence", [])
-            res_lvl = sr.get("res_level", "res9")
-            
             if len(coords) < 2:
                 continue
                 
             path_3d = []
-            for pt_idx, pt in enumerate(coords):
-                cell_id = pt["cell"]
-                # Calculate height for this cell
-                if res_lvl == "res8":
-                    z_offset = res8_height_map.get(cell_id, 50.0)
-                elif res_lvl == "res9":
-                    parent_res8 = h3.cell_to_parent(cell_id, 8)
-                    z_offset = res8_height_map.get(parent_res8, 0.0) + res9_height_map.get(cell_id, 50.0)
+            for pt in coords:
+                cell_id = pt.get("cell")
+                if cell_id:
+                    parent_res8 = h3.cell_to_parent(cell_id, 8) if h3.get_resolution(cell_id) >= 8 else cell_id
+                    z_offset = res8_height_map.get(parent_res8, 40.0) + 30.0
                 else:
-                    parent_res9 = h3.cell_to_parent(cell_id, 9)
-                    grandparent_res8 = h3.cell_to_parent(cell_id, 8)
-                    z_offset = res8_height_map.get(grandparent_res8, 0.0) + res9_height_map.get(parent_res9, 0.0) + res10_height_map.get(cell_id, 50.0)
-                    
-                path_3d.append([round(pt["lng"], 6), round(pt["lat"], 6), round(z_offset + 40.0, 2)])
+                    z_offset = 60.0
+                path_3d.append([round(pt["lng"], 6), round(pt["lat"], 6), round(z_offset, 2)])
                 
-            data_subroutes.append({
+            data_subroutes_100.append({
                 "rank": idx + 1,
                 "support": sr["trip_support"],
                 "speed": sr["avg_speed_kmh"],
+                "distance": sr["avg_distance_km"],
                 "duration": sr["avg_duration_sec"],
-                "res_level": res_lvl,
+                "seq_len": sr["sequence_length"],
                 "path": path_3d,
                 "color": colors_rgb[idx % len(colors_rgb)]
             })
             
-    print(f"  ✓ Processed {len(data_subroutes)} Top Sub-Route 3D Paths.")
+    print(f"  ✓ Processed {len(data_subroutes_100)} 100 Popular Long Sub-Routes for 3D Floating PathLayer.")
     
-    print("\n3. Building 3D Deck.gl Stepped Pyramid + Top 20 Sub-Routes App (`output/h3_3d_map.html`)...")
+    print("\n3. Building 3D Deck.gl Stepped Pyramid + 100 Sub-Routes App (`output/h3_3d_map.html`)...")
     
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Porto Taxi Trajectory – 3D H3 Pyramid & Top 20 Sub-Routes Map</title>
+    <title>Porto Taxi Trajectory – 3D H3 Pyramid & 100 Popular Long Sub-Routes Map</title>
     <!-- Deck.gl & MapLibre GL -->
     <script src="https://unpkg.com/deck.gl@8.9.0/dist.min.js"></script>
     <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
@@ -233,17 +228,19 @@ def generate_3d_map():
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 16px;
             padding: 1.5rem;
-            width: 360px;
+            width: 380px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            max-height: 90vh;
+            overflow-y: auto;
         }}
         
         .panel-title {{
             font-size: 1.25rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #00f2fe, #ff0844);
+            background: linear-gradient(135deg, #00f2fe, #ffd700);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.3rem;
         }}
 
         .panel-sub {{
@@ -265,8 +262,8 @@ def generate_3d_map():
         }}
 
         .layer-toggle.highlight {{
-            background: rgba(255, 8, 68, 0.12);
-            border: 1px solid rgba(255, 8, 68, 0.4);
+            background: rgba(255, 215, 0, 0.12);
+            border: 1px solid rgba(255, 215, 0, 0.4);
         }}
 
         .layer-label {{
@@ -305,6 +302,44 @@ def generate_3d_map():
         }}
         input:checked + .slider {{ background-color: #00f2fe; }}
         input:checked + .slider:before {{ transform: translateX(16px); }}
+
+        .filter-section {{
+            margin-top: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 12px;
+        }}
+        .filter-title {{
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #ffd700;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }}
+        .filter-buttons {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }}
+        .dist-btn {{
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #cbd5e1;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }}
+        .dist-btn.active {{
+            background: linear-gradient(135deg, #00f2fe, #7f00ff);
+            color: #fff;
+            border-color: #00f2fe;
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+        }}
 
         .slider-container {{
             margin-top: 1rem;
@@ -358,21 +393,38 @@ def generate_3d_map():
     <div id="container"></div>
 
     <div class="control-panel">
-        <div class="panel-title">3D Pyramid & Top 20 Sub-Routes</div>
-        <div class="panel-sub">3D Cumulative Stepped Hexagons + Mined Sub-Route Flow Trajectories</div>
+        <div class="panel-title">3D H3 Pyramid & 100 Long Sub-Routes</div>
+        <div class="panel-sub">3D Cumulative Stepped Hexagons + 100 Mined Popular Long Corridors</div>
 
         <div class="layer-toggle highlight">
             <div class="layer-label">
                 <div class="color-dot dot-subroutes"></div>
-                🔥 Top 20 Active Sub-Routes (3D Paths)
+                🔥 100 Popular Long Sub-Routes (3D Paths)
             </div>
             <label class="switch">
                 <input type="checkbox" id="check-subroutes" checked onchange="updateLayers()">
-                <span class="slider" style="background-color:#ff0844;"></span>
+                <span class="slider" style="background-color:#ffd700;"></span>
             </label>
         </div>
 
-        <div class="layer-toggle">
+        <!-- Distance Threshold Filter -->
+        <div class="filter-section">
+            <div class="filter-title">
+                <span>📏 Distance Length Filter:</span>
+                <span id="active-filter-label" style="color:#00f2fe;">All 100</span>
+            </div>
+            <div class="filter-buttons">
+                <button class="dist-btn active" onclick="setDistFilter(0, 'All 100', this)">All 100</button>
+                <button class="dist-btn" onclick="setDistFilter(1.0, '≥ 1.0 km', this)">≥ 1 km</button>
+                <button class="dist-btn" onclick="setDistFilter(3.0, '≥ 3.0 km', this)">≥ 3 km</button>
+                <button class="dist-btn" onclick="setDistFilter(5.0, '≥ 5.0 km', this)">≥ 5 km</button>
+                <button class="dist-btn" onclick="setDistFilter(10.0, '≥ 10 km', this)">≥ 10 km</button>
+                <button class="dist-btn" onclick="setDistFilter(20.0, '≥ 20 km', this)">≥ 20 km</button>
+                <button class="dist-btn" onclick="setDistFilter(40.0, '≥ 40 km', this)">≥ 40 km</button>
+            </div>
+        </div>
+
+        <div class="layer-toggle" style="margin-top:12px;">
             <div class="layer-label">
                 <div class="color-dot dot-res8"></div>
                 Res 8 Base Layer (Z = 0)
@@ -427,9 +479,10 @@ def generate_3d_map():
         const dataRes8 = {json.dumps(data_res8)};
         const dataRes9 = {json.dumps(data_res9)};
         const dataRes10 = {json.dumps(data_res10)};
-        const dataSubroutes = {json.dumps(data_subroutes)};
+        const dataSubroutes100 = {json.dumps(data_subroutes_100)};
 
         let currentScale = 1.0;
+        let minDistanceFilter = 0.0;
 
         function updateTooltip(info) {{
             const tooltip = document.getElementById('tooltip');
@@ -440,11 +493,12 @@ def generate_3d_map():
                 
                 if (info.object.rank) {{
                     tooltip.innerHTML = `
-                        <div style="color:#ff0844; font-weight:700; font-size:1rem;">🔥 Top Sub-Route #${{info.object.rank}}</div>
-                        <div>Trips Volume: <strong>${{info.object.support.toLocaleString()}}</strong></div>
+                        <div style="color:#ffd700; font-weight:700; font-size:1rem;">🔥 Popular Long Sub-Route #${{info.object.rank}}</div>
+                        <div>Distance Length: <strong>${{info.object.distance}} km</strong></div>
+                        <div>Trips Volume: <strong>${{info.object.support.toLocaleString()}} trips</strong></div>
                         <div>Avg Speed: <strong>${{info.object.speed}} km/h</strong></div>
                         <div>Avg Duration: <strong>${{(info.object.duration / 60.0).toFixed(1)}} min</strong></div>
-                        <div style="font-size:0.75rem; color:#94a3b8;">Resolution: ${{info.object.res_level}}</div>
+                        <div style="font-size:0.75rem; color:#94a3b8;">H3 Sequence: ${{info.object.seq_len}} cells</div>
                     `;
                 }} else {{
                     tooltip.innerHTML = `
@@ -478,6 +532,11 @@ def generate_3d_map():
                 maxzoom: 20
             }}]
         }};
+
+        function getFilteredSubroutes() {{
+            if (minDistanceFilter <= 0) return dataSubroutes100;
+            return dataSubroutes100.filter(sr => sr.distance >= minDistanceFilter);
+        }}
 
         function getLayers() {{
             const layers = [];
@@ -539,17 +598,18 @@ def generate_3d_map():
                 }}));
             }}
 
-            // Layer 4: Top 20 Active Sub-Routes 3D Path Layer
+            // Layer 4: 100 Popular Long Sub-Routes 3D Path Layer
             if (document.getElementById('check-subroutes').checked) {{
+                const filteredPaths = getFilteredSubroutes();
                 layers.push(new deck.PathLayer({{
                     id: 'layer-path-subroutes',
-                    data: dataSubroutes,
+                    data: filteredPaths,
                     pickable: true,
                     widthScale: 1,
                     widthMinPixels: 4,
                     getPath: d => d.path.map(pt => [pt[0], pt[1], pt[2] * currentScale]),
                     getColor: d => d.color,
-                    getWidth: d => d.rank <= 3 ? 12 : d.rank <= 10 ? 8 : 5,
+                    getWidth: d => d.rank <= 5 ? 12 : d.rank <= 25 ? 8 : 5,
                     onHover: updateTooltip
                 }}));
             }}
@@ -575,6 +635,14 @@ def generate_3d_map():
             deckgl.setProps({{ layers: getLayers() }});
         }}
 
+        function setDistFilter(minKm, labelText, btnElem) {{
+            minDistanceFilter = minKm;
+            document.getElementById('active-filter-label').innerText = labelText;
+            document.querySelectorAll('.dist-btn').forEach(btn => btn.classList.remove('active'));
+            btnElem.classList.add('active');
+            updateLayers();
+        }}
+
         function updateHeightScale(val) {{
             currentScale = parseFloat(val);
             document.getElementById('scale-val').innerText = currentScale.toFixed(1) + 'x';
@@ -588,7 +656,7 @@ def generate_3d_map():
     with open(OUTPUT_3D_MAP, "w", encoding="utf-8") as f:
         f.write(html_content)
         
-    print(f"  ✓ Saved 3D Pyramid + Top 20 Sub-Routes Map to {OUTPUT_3D_MAP}")
+    print(f"  ✓ Saved 3D Pyramid + 100 Popular Long Sub-Routes Map to {OUTPUT_3D_MAP}")
 
 if __name__ == "__main__":
     generate_3d_map()
