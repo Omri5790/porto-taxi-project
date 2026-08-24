@@ -4,9 +4,8 @@ Porto Taxi Trajectory Project – 3D Stacked Pyramid + 100 Popular Long Sub-Rout
 Generates `output/h3_3d_map.html` with:
 1. Res 8, Res 9, Res 10 3D Cumulative Stepped Hexagon Pyramids.
 2. 100 Mined Popular Long Sub-Routes rendered as a High-Visibility 3D Floating Path Layer.
-   Elevated ABOVE 3D columns so lines are never occluded!
-3. Interactive Distance Threshold Filters (All 100, ≥1km, ≥3km, ≥5km, ≥10km, ≥20km, ≥40km).
-4. Dedicated "Focus 100 Sub-Routes" preset toggle button.
+3. Rock-solid ScatterplotLayer for Start/End Markers (WebGL optimized).
+4. Bulletproof JavaScript with defensive null-checks to prevent any WebGL/JS freezes.
 """
 
 import os
@@ -87,8 +86,8 @@ def generate_3d_map():
         
         if poly3d:
             data_res8.append({
-                "hex": cell,
-                "count": count,
+                "hex": str(cell),
+                "count": int(count),
                 "norm": norm_val,
                 "polygon": poly3d,
                 "height": h_meters,
@@ -112,8 +111,8 @@ def generate_3d_map():
         poly3d = get_cell_polygon_3d(cell, base_z=base_z)
         if poly3d:
             data_res9.append({
-                "hex": cell,
-                "count": count,
+                "hex": str(cell),
+                "count": int(count),
                 "norm": norm_val,
                 "polygon": poly3d,
                 "height": h_meters,
@@ -141,8 +140,8 @@ def generate_3d_map():
         poly3d = get_cell_polygon_3d(cell, base_z=base_z)
         if poly3d:
             data_res10.append({
-                "hex": cell,
-                "count": count,
+                "hex": str(cell),
+                "count": int(count),
                 "norm": norm_val,
                 "polygon": poly3d,
                 "height": h_meters,
@@ -154,7 +153,6 @@ def generate_3d_map():
     data_subroutes_100 = []
     start_end_points = []
     
-    # Vibrant high-contrast neon palette with full opacity [r, g, b, 255]
     colors_neon = [
         [255, 8, 68, 255], [0, 242, 254, 255], [0, 230, 118, 255], [255, 215, 0, 255],
         [127, 0, 255, 255], [255, 145, 0, 255], [224, 64, 251, 255], [56, 189, 248, 255],
@@ -177,49 +175,45 @@ def generate_3d_map():
             
             for pt in coords:
                 cell_id = pt.get("cell")
-                # Ensure Z height is elevated ABOVE 3D extruded columns (min height 120m to 250m)
                 if cell_id:
                     try:
                         res = h3.get_resolution(cell_id)
-                        if res >= 8:
-                            parent_res8 = h3.cell_to_parent(cell_id, 8)
-                        else:
-                            parent_res8 = cell_id
+                        parent_res8 = h3.cell_to_parent(cell_id, 8) if res >= 8 else cell_id
                     except Exception:
                         parent_res8 = cell_id
-                    h_col = res8_height_map.get(parent_res8, 50.0)
-                    z_elevated = max(180.0, h_col * 1.5 + 80.0)
+                    h_col = res8_height_map.get(parent_res8, 40.0)
+                    z_elevated = max(160.0, h_col * 1.2 + 60.0)
                 else:
-                    z_elevated = 200.0
+                    z_elevated = 180.0
                     
-                path_3d.append([round(pt["lng"], 6), round(pt["lat"], 6), round(z_elevated, 2)])
+                path_3d.append([round(float(pt["lng"]), 6), round(float(pt["lat"]), 6), round(float(z_elevated), 2)])
                 
             data_subroutes_100.append({
-                "rank": idx + 1,
-                "support": sr["trip_support"],
-                "speed": sr["avg_speed_kmh"],
-                "distance": sr["avg_distance_km"],
-                "duration": sr["avg_duration_sec"],
-                "seq_len": sr["sequence_length"],
+                "rank": int(idx + 1),
+                "support": int(sr.get("trip_support", 0)),
+                "speed": float(sr.get("avg_speed_kmh", 0.0)),
+                "distance": float(sr.get("avg_distance_km", 0.0)),
+                "duration": float(sr.get("avg_duration_sec", 0.0)),
+                "seq_len": int(sr.get("sequence_length", 0)),
                 "path": path_3d,
                 "color": color
             })
             
-            # Start & End markers for top 25 routes
-            if idx < 25:
+            # Start & End Scatterplot markers for top 30 routes
+            if idx < 30 and len(path_3d) >= 2:
                 start_end_points.append({
-                    "rank": idx + 1,
+                    "rank": int(idx + 1),
                     "type": "Start",
                     "position": path_3d[0],
                     "color": [255, 255, 255, 255],
-                    "radius": 15
+                    "radius": 12
                 })
                 start_end_points.append({
-                    "rank": idx + 1,
+                    "rank": int(idx + 1),
                     "type": "End",
                     "position": path_3d[-1],
                     "color": color,
-                    "radius": 18
+                    "radius": 15
                 })
             
     print(f"  ✓ Processed {len(data_subroutes_100)} 100 Popular Long Sub-Routes for High-Visibility 3D PathLayer.")
@@ -258,9 +252,9 @@ def generate_3d_map():
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 16px;
-            padding: 1.5rem;
+            padding: 1.4rem;
             width: 380px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.75);
             max-height: 90vh;
             overflow-y: auto;
         }}
@@ -277,7 +271,7 @@ def generate_3d_map():
         .panel-sub {{
             font-size: 0.82rem;
             color: #94a3b8;
-            margin-bottom: 1.2rem;
+            margin-bottom: 1rem;
             line-height: 1.4;
         }}
 
@@ -288,7 +282,7 @@ def generate_3d_map():
         }}
         .preset-btn {{
             flex: 1;
-            padding: 8px;
+            padding: 9px;
             border-radius: 8px;
             border: 1px solid rgba(255,255,255,0.15);
             background: rgba(255,255,255,0.06);
@@ -302,7 +296,7 @@ def generate_3d_map():
         .preset-btn.active {{
             background: linear-gradient(135deg, #ff0844, #7f00ff);
             border-color: #ff0844;
-            box-shadow: 0 0 12px rgba(255, 8, 68, 0.5);
+            box-shadow: 0 0 12px rgba(255, 8, 68, 0.6);
         }}
 
         .layer-toggle {{
@@ -359,11 +353,11 @@ def generate_3d_map():
         input:checked + .slider:before {{ transform: translateX(16px); }}
 
         .filter-section {{
-            margin-top: 12px;
+            margin-top: 10px;
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 12px;
-            padding: 12px;
+            padding: 10px;
         }}
         .filter-title {{
             font-size: 0.82rem;
@@ -399,7 +393,7 @@ def generate_3d_map():
         .slider-container {{
             margin-top: 1rem;
             background: rgba(255,255,255,0.04);
-            padding: 12px;
+            padding: 10px;
             border-radius: 10px;
             border: 1px solid rgba(255,255,255,0.08);
         }}
@@ -485,7 +479,7 @@ def generate_3d_map():
             </div>
         </div>
 
-        <div class="layer-toggle" style="margin-top:12px;">
+        <div class="layer-toggle" style="margin-top:10px;">
             <div class="layer-label">
                 <div class="color-dot dot-res8"></div>
                 Res 8 Base Layer (Z = 0)
@@ -548,7 +542,7 @@ def generate_3d_map():
 
         function updateTooltip(info) {{
             const tooltip = document.getElementById('tooltip');
-            if (info.object) {{
+            if (info && info.object) {{
                 tooltip.style.left = (info.x + 15) + 'px';
                 tooltip.style.top = (info.y + 15) + 'px';
                 tooltip.style.display = 'block';
@@ -556,18 +550,18 @@ def generate_3d_map():
                 if (info.object.rank) {{
                     tooltip.innerHTML = `
                         <div style="color:#ffd700; font-weight:700; font-size:1rem;">🔥 Popular Long Sub-Route #${{info.object.rank}}</div>
-                        <div>Distance Length: <strong>${{info.object.distance}} km</strong></div>
-                        <div>Trips Volume: <strong>${{info.object.support.toLocaleString()}} trips</strong></div>
-                        <div>Avg Speed: <strong>${{info.object.speed}} km/h</strong></div>
-                        <div>Avg Duration: <strong>${{(info.object.duration / 60.0).toFixed(1)}} min</strong></div>
-                        <div style="font-size:0.75rem; color:#94a3b8;">H3 Sequence: ${{info.object.seq_len}} cells</div>
+                        <div>Distance Length: <strong>${{info.object.distance || 0}} km</strong></div>
+                        <div>Trips Volume: <strong>${{(info.object.support || 0).toLocaleString()}} trips</strong></div>
+                        <div>Avg Speed: <strong>${{info.object.speed || 0}} km/h</strong></div>
+                        <div>Avg Duration: <strong>${{((info.object.duration || 0) / 60.0).toFixed(1)}} min</strong></div>
+                        <div style="font-size:0.75rem; color:#94a3b8;">H3 Sequence: ${{info.object.seq_len || 0}} cells</div>
                     `;
                 }} else {{
                     tooltip.innerHTML = `
                         <div style="color:#00f2fe; font-weight:700;">H3 Cell ID: ${{info.object.hex}}</div>
-                        <div>Visits: <strong>${{info.object.count.toLocaleString()}}</strong></div>
+                        <div>Visits: <strong>${{(info.object.count || 0).toLocaleString()}}</strong></div>
                         <div>Norm Height: <strong>${{info.object.norm}} / 1.00</strong></div>
-                        <div>Current Base Z: <strong>${{(info.object.base_z * currentScale).toFixed(1)}}m</strong></div>
+                        <div>Current Base Z: <strong>${{((info.object.base_z || 0) * currentScale).toFixed(1)}}m</strong></div>
                     `;
                 }}
             }} else {{
@@ -596,18 +590,19 @@ def generate_3d_map():
         }};
 
         function getFilteredSubroutes() {{
+            if (!dataSubroutes100) return [];
             if (minDistanceFilter <= 0) return dataSubroutes100;
-            return dataSubroutes100.filter(sr => sr.distance >= minDistanceFilter);
+            return dataSubroutes100.filter(sr => (sr.distance || 0) >= minDistanceFilter);
         }}
 
         function getLayers() {{
             const layers = [];
 
             // Layer 1: Res 8 Base Layer (Z = 0)
-            if (document.getElementById('check-res8').checked) {{
+            if (document.getElementById('check-res8') && document.getElementById('check-res8').checked) {{
                 layers.push(new deck.PolygonLayer({{
                     id: 'layer-polygon-res8',
-                    data: dataRes8,
+                    data: dataRes8 || [],
                     pickable: true,
                     wireframe: true,
                     filled: true,
@@ -623,10 +618,10 @@ def generate_3d_map():
             }}
 
             // Layer 2: Res 9 Middle Layer (Base Z = parent_z * currentScale)
-            if (document.getElementById('check-res9').checked) {{
+            if (document.getElementById('check-res9') && document.getElementById('check-res9').checked) {{
                 layers.push(new deck.PolygonLayer({{
                     id: 'layer-polygon-res9',
-                    data: dataRes9,
+                    data: dataRes9 || [],
                     pickable: true,
                     wireframe: true,
                     filled: true,
@@ -642,10 +637,10 @@ def generate_3d_map():
             }}
 
             // Layer 3: Res 10 Peak Layer (Base Z = parents_z * currentScale)
-            if (document.getElementById('check-res10').checked) {{
+            if (document.getElementById('check-res10') && document.getElementById('check-res10').checked) {{
                 layers.push(new deck.PolygonLayer({{
                     id: 'layer-polygon-res10',
-                    data: dataRes10,
+                    data: dataRes10 || [],
                     pickable: true,
                     wireframe: true,
                     filled: true,
@@ -661,7 +656,7 @@ def generate_3d_map():
             }}
 
             // Layer 4: 100 Popular Long Sub-Routes 3D Floating Path Layer
-            if (document.getElementById('check-subroutes').checked) {{
+            if (document.getElementById('check-subroutes') && document.getElementById('check-subroutes').checked) {{
                 const filteredPaths = getFilteredSubroutes();
                 layers.push(new deck.PathLayer({{
                     id: 'layer-path-subroutes',
@@ -669,21 +664,28 @@ def generate_3d_map():
                     pickable: true,
                     widthScale: 1,
                     widthMinPixels: 6,
-                    getPath: d => d.path.map(pt => [pt[0], pt[1], pt[2] * (currentScale > 0.5 ? 1.0 : 0.2)]),
-                    getColor: d => d.color,
+                    getPath: d => (d.path || []).map(pt => [pt[0], pt[1], pt[2] * (currentScale > 0.5 ? 1.0 : 0.2)]),
+                    getColor: d => d.color || [255, 215, 0, 255],
                     getWidth: d => d.rank <= 5 ? 16 : d.rank <= 25 ? 10 : 6,
                     onHover: updateTooltip
                 }}));
 
-                // Layer 5: Start & End 3D Sphere Markers
-                layers.push(new deck.PointCloudLayer({{
-                    id: 'layer-pointcloud-startend',
-                    data: dataStartEndPoints,
+                // Layer 5: Start & End Scatterplot Markers (Rock Solid WebGL Circles)
+                layers.push(new deck.ScatterplotLayer({{
+                    id: 'layer-scatterplot-startend',
+                    data: dataStartEndPoints || [],
                     pickable: true,
-                    pointRadiusUnits: 'pixels',
-                    getRadius: d => d.radius,
+                    opacity: 0.9,
+                    stroked: true,
+                    filled: true,
+                    radiusScale: 1,
+                    radiusMinPixels: 6,
+                    radiusMaxPixels: 20,
+                    lineWidthMinPixels: 2,
                     getPosition: d => [d.position[0], d.position[1], d.position[2] * (currentScale > 0.5 ? 1.0 : 0.2)],
-                    getColor: d => d.color,
+                    getRadius: d => d.radius || 12,
+                    getFillColor: d => d.color || [255, 255, 255, 255],
+                    getLineColor: [0, 0, 0, 200],
                     onHover: updateTooltip
                 }}));
             }}
