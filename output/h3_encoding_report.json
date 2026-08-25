@@ -1,0 +1,9 @@
+{
+  "summary": {
+    "total_trips_encoded": 1622765,
+    "unique_h3_res8_cells": 4507,
+    "unique_h3_res9_cells": 15287,
+    "unique_h3_res10_cells": 46594,
+    "timestamp": "2026-08-23T15:51:58.576390"
+  }
+}

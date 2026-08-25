@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Porto Taxi Project – Stage 2: H3 Spatial Encoding Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: rgba(18, 26, 43, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --accent-purple: #7f00ff;
+            --accent-pink: #ff0844;
+            --accent-green: #00e676;
+            --accent-orange: #ff9100;
+            --text-main: #f0f4f8;
+            --text-sub: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(0, 242, 254, 0.08) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(127, 0, 255, 0.1) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .header-title h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.3rem;
+        }
+        .badge {
+            background: rgba(127, 0, 255, 0.15);
+            border: 1px solid rgba(127, 0, 255, 0.4);
+            color: #d8b4fe;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        .kpi-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        .kpi-label { color: var(--text-sub); font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.4rem; }
+        .kpi-value { font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #fff; }
+        .kpi-subtext { font-size: 0.8rem; color: var(--accent-cyan); margin-top: 0.4rem; }
+        
+        .map-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .map-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .map-btn {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: #0b0f19;
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        iframe {
+            width: 100%;
+            height: 480px;
+            border: none;
+            border-radius: 12px;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        .col-6 { grid-column: span 6; }
+        @media (max-width: 900px) { .col-6 { grid-column: span 12; } }
+        .chart-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: #f1f5f9; }
+        .chart-container { position: relative; height: 260px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">
+            <h1>Stage 2: Uber H3 Spatial Encoding Dashboard</h1>
+            <p>1,622,765 Encoded Porto Taxi Trajectories • Multi-Resolution Hexagonal Grid</p>
+        </div>
+        <div class="badge">STAGE 2 COMPLETED</div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Trips Encoded</div>
+            <div class="kpi-value">1,622,765</div>
+            <div class="kpi-subtext">100% Valid Cleaned Trips</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">H3 Res 8 Cells</div>
+            <div class="kpi-value">4,507</div>
+            <div class="kpi-subtext">~0.73 km² Neighborhood Grid</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">H3 Res 9 Cells</div>
+            <div class="kpi-value">15,287</div>
+            <div class="kpi-subtext">~0.10 km² Street-Level Grid</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Mean Res 8 Sequence</div>
+            <div class="kpi-value">7.66 cells</div>
+            <div class="kpi-subtext">Avg Cells per Trip</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Mean Res 9 Sequence</div>
+            <div class="kpi-value">16.90 cells</div>
+            <div class="kpi-subtext">Avg Cells per Trip</div>
+        </div>
+    </div>
+
+    <!-- Map Preview -->
+    <div class="map-section">
+        <div class="map-title">
+            <span>🗺️ Interactive Folium H3 Hexagon Map (Porto, Portugal)</span>
+            <a href="h3_hexagons_map.html" target="_blank" class="map-btn">Open Full Screen Map ↗</a>
+        </div>
+        <iframe src="h3_hexagons_map.html"></iframe>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+        <div class="chart-card col-6">
+            <div class="chart-title">Top 10 Most Visited H3 Res 8 Neighborhood Cells</div>
+            <div class="chart-container">
+                <canvas id="res8Chart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card col-6">
+            <div class="chart-title">Top 10 Most Visited H3 Res 9 Street Cells</div>
+            <div class="chart-container">
+                <canvas id="res9Chart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card col-6">
+            <div class="chart-title">Res 8 Sequence Length Distribution</div>
+            <div class="chart-container">
+                <canvas id="res8LenChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card col-6">
+            <div class="chart-title">Res 9 Sequence Length Distribution</div>
+            <div class="chart-container">
+                <canvas id="res9LenChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = "'Outfit', sans-serif";
+
+        // Top Res 8
+        new Chart(document.getElementById('res8Chart'), {
+            type: 'bar',
+            data: {
+                labels: ["8839220f03fffff", "8839220f09fffff", "8839220f01fffff", "8839220f1dfffff", "8839220f15fffff", "8839220f0dfffff", "8839220f47fffff", "8839220f57fffff", "8839220f41fffff", "8839220f6bfffff"],
+                datasets: [{
+                    label: 'Visits',
+                    data: [702549, 444537, 428402, 409207, 342900, 329809, 311080, 299325, 295517, 271620],
+                    backgroundColor: 'rgba(0, 242, 254, 0.75)',
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        // Top Res 9
+        new Chart(document.getElementById('res9Chart'), {
+            type: 'bar',
+            data: {
+                labels: ["8939220f027ffff", "8939220f023ffff", "8939220f02fffff", "8939220f1dbffff", "8939220f00fffff", "8939220f02bffff", "8939220f1cbffff", "8939220f013ffff", "8939220f08bffff", "8939220f037ffff"],
+                datasets: [{
+                    label: 'Visits',
+                    data: [364731, 329805, 302419, 275846, 274200, 261442, 248950, 247216, 228944, 222769],
+                    backgroundColor: 'rgba(127, 0, 255, 0.75)',
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        // Res 8 Lengths
+        new Chart(document.getElementById('res8LenChart'), {
+            type: 'line',
+            data: {
+                labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                datasets: [{
+                    label: 'Trips Count',
+                    data: [37206, 103952, 178036, 203376, 193173, 165164, 135853, 110532, 84141, 67632, 51981, 44103, 37739, 36093, 29784],
+                    borderColor: '#00e676',
+                    fill: true,
+                    backgroundColor: 'rgba(0, 230, 118, 0.1)',
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        // Res 9 Lengths
+        new Chart(document.getElementById('res9LenChart'), {
+            type: 'line',
+            data: {
+                labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                datasets: [{
+                    label: 'Trips Count',
+                    data: [17475, 10915, 18996, 33658, 51090, 67942, 78542, 88668, 93130, 91182, 86346, 85939, 79501, 75046, 68774],
+                    borderColor: '#ff9100',
+                    fill: true,
+                    backgroundColor: 'rgba(255, 145, 0, 0.1)',
+                    tension: 0.3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    </script>
+</body>
+</html>

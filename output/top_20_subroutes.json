@@ -1,0 +1,648 @@
+[
+  {
+    "res_level": "res9",
+    "h3_sequence": [
+      "8939220f00fffff",
+      "8939220f003ffff",
+      "8939220f013ffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 114625,
+    "avg_duration_sec": 809.6,
+    "avg_distance_km": 6.03,
+    "avg_speed_kmh": 26.8,
+    "start_h3": "8939220f00fffff",
+    "end_h3": "8939220f013ffff",
+    "cell_coordinates": [
+      {
+        "cell": "8939220f00fffff",
+        "lat": 41.14661,
+        "lng": -8.621262
+      },
+      {
+        "cell": "8939220f003ffff",
+        "lat": 41.149024,
+        "lng": -8.624265
+      },
+      {
+        "cell": "8939220f013ffff",
+        "lat": 41.151439,
+        "lng": -8.627269
+      }
+    ]
+  },
+  {
+    "res_level": "res8",
+    "h3_sequence": [
+      "8839220f01fffff",
+      "8839220f09fffff",
+      "8839220f0dfffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 98386,
+    "avg_duration_sec": 867.0,
+    "avg_distance_km": 6.78,
+    "avg_speed_kmh": 28.2,
+    "start_h3": "8839220f01fffff",
+    "end_h3": "8839220f0dfffff",
+    "cell_coordinates": [
+      {
+        "cell": "8839220f01fffff",
+        "lat": 41.149024,
+        "lng": -8.624265
+      },
+      {
+        "cell": "8839220f09fffff",
+        "lat": 41.157022,
+        "lng": -8.62913
+      },
+      {
+        "cell": "8839220f0dfffff",
+        "lat": 41.149929,
+        "lng": -8.635561
+      }
+    ]
+  },
+  {
+    "res_level": "res10",
+    "h3_sequence": [
+      "8a39220f025ffff",
+      "8a39220f0257fff",
+      "8a39220f020ffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 95903,
+    "avg_duration_sec": 854.6,
+    "avg_distance_km": 5.37,
+    "avg_speed_kmh": 22.6,
+    "start_h3": "8a39220f025ffff",
+    "end_h3": "8a39220f020ffff",
+    "cell_coordinates": [
+      {
+        "cell": "8a39220f025ffff",
+        "lat": 41.14773,
+        "lng": -8.60813
+      },
+      {
+        "cell": "8a39220f0257fff",
+        "lat": 41.14786,
+        "lng": -8.609743
+      },
+      {
+        "cell": "8a39220f020ffff",
+        "lat": 41.147989,
+        "lng": -8.611357
+      }
+    ]
+  },
+  {
+    "res_level": "res8",
+    "h3_sequence": [
+      "8839220f03fffff",
+      "8839220f01fffff",
+      "8839220f09fffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 94669,
+    "avg_duration_sec": 830.3,
+    "avg_distance_km": 6.17,
+    "avg_speed_kmh": 26.8,
+    "start_h3": "8839220f03fffff",
+    "end_h3": "8839220f09fffff",
+    "cell_coordinates": [
+      {
+        "cell": "8839220f03fffff",
+        "lat": 41.148119,
+        "lng": -8.61297
+      },
+      {
+        "cell": "8839220f01fffff",
+        "lat": 41.149024,
+        "lng": -8.624265
+      },
+      {
+        "cell": "8839220f09fffff",
+        "lat": 41.157022,
+        "lng": -8.62913
+      }
+    ]
+  },
+  {
+    "res_level": "res9",
+    "h3_sequence": [
+      "8939220f03bffff",
+      "8939220f077ffff",
+      "8939220f02bffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 92634,
+    "avg_duration_sec": 877.1,
+    "avg_distance_km": 5.01,
+    "avg_speed_kmh": 20.6,
+    "start_h3": "8939220f03bffff",
+    "end_h3": "8939220f02bffff",
+    "cell_coordinates": [
+      {
+        "cell": "8939220f03bffff",
+        "lat": 41.147364,
+        "lng": -8.617116
+      },
+      {
+        "cell": "8939220f077ffff",
+        "lat": 41.144195,
+        "lng": -8.618258
+      },
+      {
+        "cell": "8939220f02bffff",
+        "lat": 41.144949,
+        "lng": -8.614113
+      }
+    ]
+  },
+  {
+    "res_level": "res8",
+    "h3_sequence": [
+      "8839220f53fffff",
+      "8839220f5bfffff",
+      "8839220f51fffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 86083,
+    "avg_duration_sec": 1023.4,
+    "avg_distance_km": 10.95,
+    "avg_speed_kmh": 38.5,
+    "start_h3": "8839220f53fffff",
+    "end_h3": "8839220f51fffff",
+    "cell_coordinates": [
+      {
+        "cell": "8839220f53fffff",
+        "lat": 41.1703,
+        "lng": -8.604968
+      },
+      {
+        "cell": "8839220f5bfffff",
+        "lat": 41.178298,
+        "lng": -8.609832
+      },
+      {
+        "cell": "8839220f51fffff",
+        "lat": 41.171207,
+        "lng": -8.616266
+      }
+    ]
+  },
+  {
+    "res_level": "res9",
+    "h3_sequence": [
+      "8939220f013ffff",
+      "8939220f08bffff",
+      "8939220f0d7ffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 85060,
+    "avg_duration_sec": 857.8,
+    "avg_distance_km": 6.5,
+    "avg_speed_kmh": 27.3,
+    "start_h3": "8939220f013ffff",
+    "end_h3": "8939220f0d7ffff",
+    "cell_coordinates": [
+      {
+        "cell": "8939220f013ffff",
+        "lat": 41.151439,
+        "lng": -8.627269
+      },
+      {
+        "cell": "8939220f08bffff",
+        "lat": 41.153853,
+        "lng": -8.630272
+      },
+      {
+        "cell": "8939220f0d7ffff",
+        "lat": 41.153098,
+        "lng": -8.634419
+      }
+    ]
+  },
+  {
+    "res_level": "res9",
+    "h3_sequence": [
+      "8939220f003ffff",
+      "8939220f013ffff",
+      "8939220f08bffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 83424,
+    "avg_duration_sec": 834.0,
+    "avg_distance_km": 6.57,
+    "avg_speed_kmh": 28.4,
+    "start_h3": "8939220f003ffff",
+    "end_h3": "8939220f08bffff",
+    "cell_coordinates": [
+      {
+        "cell": "8939220f003ffff",
+        "lat": 41.149024,
+        "lng": -8.624265
+      },
+      {
+        "cell": "8939220f013ffff",
+        "lat": 41.151439,
+        "lng": -8.627269
+      },
+      {
+        "cell": "8939220f08bffff",
+        "lat": 41.153853,
+        "lng": -8.630272
+      }
+    ]
+  },
+  {
+    "res_level": "res10",
+    "h3_sequence": [
+      "8a39220f0397fff",
+      "8a39220f076ffff",
+      "8a39220f02b7fff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 82508,
+    "avg_duration_sec": 886.2,
+    "avg_distance_km": 4.98,
+    "avg_speed_kmh": 20.2,
+    "start_h3": "8a39220f0397fff",
+    "end_h3": "8a39220f02b7fff",
+    "cell_coordinates": [
+      {
+        "cell": "8a39220f0397fff",
+        "lat": 41.146351,
+        "lng": -8.618035
+      },
+      {
+        "cell": "8a39220f076ffff",
+        "lat": 41.145208,
+        "lng": -8.61734
+      },
+      {
+        "cell": "8a39220f02b7fff",
+        "lat": 41.145079,
+        "lng": -8.615726
+      }
+    ]
+  },
+  {
+    "res_level": "res9",
+    "h3_sequence": [
+      "8939220f00fffff",
+      "8939220f003ffff",
+      "8939220f013ffff",
+      "8939220f08bffff"
+    ],
+    "sequence_length": 4,
+    "trip_support": 79882,
+    "avg_duration_sec": 828.0,
+    "avg_distance_km": 6.5,
+    "avg_speed_kmh": 28.3,
+    "start_h3": "8939220f00fffff",
+    "end_h3": "8939220f08bffff",
+    "cell_coordinates": [
+      {
+        "cell": "8939220f00fffff",
+        "lat": 41.14661,
+        "lng": -8.621262
+      },
+      {
+        "cell": "8939220f003ffff",
+        "lat": 41.149024,
+        "lng": -8.624265
+      },
+      {
+        "cell": "8939220f013ffff",
+        "lat": 41.151439,
+        "lng": -8.627269
+      },
+      {
+        "cell": "8939220f08bffff",
+        "lat": 41.153853,
+        "lng": -8.630272
+      }
+    ]
+  },
+  {
+    "res_level": "res9",
+    "h3_sequence": [
+      "8939220f08bffff",
+      "8939220f0d7ffff",
+      "8939220f0d3ffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 78140,
+    "avg_duration_sec": 821.5,
+    "avg_distance_km": 5.44,
+    "avg_speed_kmh": 23.8,
+    "start_h3": "8939220f08bffff",
+    "end_h3": "8939220f0d3ffff",
+    "cell_coordinates": [
+      {
+        "cell": "8939220f08bffff",
+        "lat": 41.153853,
+        "lng": -8.630272
+      },
+      {
+        "cell": "8939220f0d7ffff",
+        "lat": 41.153098,
+        "lng": -8.634419
+      },
+      {
+        "cell": "8939220f0d3ffff",
+        "lat": 41.152343,
+        "lng": -8.638565
+      }
+    ]
+  },
+  {
+    "res_level": "res9",
+    "h3_sequence": [
+      "8939220f023ffff",
+      "8939220f00fffff",
+      "8939220f003ffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 75690,
+    "avg_duration_sec": 806.0,
+    "avg_distance_km": 5.9,
+    "avg_speed_kmh": 26.4,
+    "start_h3": "8939220f023ffff",
+    "end_h3": "8939220f003ffff",
+    "cell_coordinates": [
+      {
+        "cell": "8939220f023ffff",
+        "lat": 41.148119,
+        "lng": -8.61297
+      },
+      {
+        "cell": "8939220f00fffff",
+        "lat": 41.14661,
+        "lng": -8.621262
+      },
+      {
+        "cell": "8939220f003ffff",
+        "lat": 41.149024,
+        "lng": -8.624265
+      }
+    ]
+  },
+  {
+    "res_level": "res9",
+    "h3_sequence": [
+      "8939220f533ffff",
+      "8939220f5abffff",
+      "8939220f517ffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 75617,
+    "avg_duration_sec": 1026.1,
+    "avg_distance_km": 10.69,
+    "avg_speed_kmh": 37.5,
+    "start_h3": "8939220f533ffff",
+    "end_h3": "8939220f517ffff",
+    "cell_coordinates": [
+      {
+        "cell": "8939220f533ffff",
+        "lat": 41.172715,
+        "lng": -8.607972
+      },
+      {
+        "cell": "8939220f5abffff",
+        "lat": 41.17513,
+        "lng": -8.610975
+      },
+      {
+        "cell": "8939220f517ffff",
+        "lat": 41.174376,
+        "lng": -8.615123
+      }
+    ]
+  },
+  {
+    "res_level": "res9",
+    "h3_sequence": [
+      "8939220f1dbffff",
+      "8939220f1d3ffff",
+      "8939220f56fffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 74534,
+    "avg_duration_sec": 883.6,
+    "avg_distance_km": 8.07,
+    "avg_speed_kmh": 32.9,
+    "start_h3": "8939220f1dbffff",
+    "end_h3": "8939220f56fffff",
+    "cell_coordinates": [
+      {
+        "cell": "8939220f1dbffff",
+        "lat": 41.154456,
+        "lng": -8.610684
+      },
+      {
+        "cell": "8939220f1d3ffff",
+        "lat": 41.157625,
+        "lng": -8.609541
+      },
+      {
+        "cell": "8939220f56fffff",
+        "lat": 41.160794,
+        "lng": -8.608398
+      }
+    ]
+  },
+  {
+    "res_level": "res8",
+    "h3_sequence": [
+      "8839220f41fffff",
+      "8839220f49fffff",
+      "88392201a3fffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 74328,
+    "avg_duration_sec": 1010.4,
+    "avg_distance_km": 11.48,
+    "avg_speed_kmh": 40.9,
+    "start_h3": "8839220f41fffff",
+    "end_h3": "88392201a3fffff",
+    "cell_coordinates": [
+      {
+        "cell": "8839220f41fffff",
+        "lat": 41.165925,
+        "lng": -8.645296
+      },
+      {
+        "cell": "8839220f49fffff",
+        "lat": 41.173922,
+        "lng": -8.650165
+      },
+      {
+        "cell": "88392201a3fffff",
+        "lat": 41.18192,
+        "lng": -8.655036
+      }
+    ]
+  },
+  {
+    "res_level": "res9",
+    "h3_sequence": [
+      "8939220f00fffff",
+      "8939220f03bffff",
+      "8939220f077ffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 74192,
+    "avg_duration_sec": 898.5,
+    "avg_distance_km": 5.11,
+    "avg_speed_kmh": 20.5,
+    "start_h3": "8939220f00fffff",
+    "end_h3": "8939220f077ffff",
+    "cell_coordinates": [
+      {
+        "cell": "8939220f00fffff",
+        "lat": 41.14661,
+        "lng": -8.621262
+      },
+      {
+        "cell": "8939220f03bffff",
+        "lat": 41.147364,
+        "lng": -8.617116
+      },
+      {
+        "cell": "8939220f077ffff",
+        "lat": 41.144195,
+        "lng": -8.618258
+      }
+    ]
+  },
+  {
+    "res_level": "res9",
+    "h3_sequence": [
+      "8939220f027ffff",
+      "8939220f023ffff",
+      "8939220f00fffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 73891,
+    "avg_duration_sec": 762.4,
+    "avg_distance_km": 5.03,
+    "avg_speed_kmh": 23.8,
+    "start_h3": "8939220f027ffff",
+    "end_h3": "8939220f00fffff",
+    "cell_coordinates": [
+      {
+        "cell": "8939220f027ffff",
+        "lat": 41.148873,
+        "lng": -8.608824
+      },
+      {
+        "cell": "8939220f023ffff",
+        "lat": 41.148119,
+        "lng": -8.61297
+      },
+      {
+        "cell": "8939220f00fffff",
+        "lat": 41.14661,
+        "lng": -8.621262
+      }
+    ]
+  },
+  {
+    "res_level": "res8",
+    "h3_sequence": [
+      "8839220f5dfffff",
+      "8839220f4bfffff",
+      "8839220f41fffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 73623,
+    "avg_duration_sec": 1027.7,
+    "avg_distance_km": 11.15,
+    "avg_speed_kmh": 39.1,
+    "start_h3": "8839220f5dfffff",
+    "end_h3": "8839220f41fffff",
+    "cell_coordinates": [
+      {
+        "cell": "8839220f5dfffff",
+        "lat": 41.172113,
+        "lng": -8.627564
+      },
+      {
+        "cell": "8839220f4bfffff",
+        "lat": 41.173018,
+        "lng": -8.638864
+      },
+      {
+        "cell": "8839220f41fffff",
+        "lat": 41.165925,
+        "lng": -8.645296
+      }
+    ]
+  },
+  {
+    "res_level": "res8",
+    "h3_sequence": [
+      "8839220f09fffff",
+      "8839220f0dfffff",
+      "8839220f47fffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 72562,
+    "avg_duration_sec": 834.1,
+    "avg_distance_km": 5.46,
+    "avg_speed_kmh": 23.6,
+    "start_h3": "8839220f09fffff",
+    "end_h3": "8839220f47fffff",
+    "cell_coordinates": [
+      {
+        "cell": "8839220f09fffff",
+        "lat": 41.157022,
+        "lng": -8.62913
+      },
+      {
+        "cell": "8839220f0dfffff",
+        "lat": 41.149929,
+        "lng": -8.635561
+      },
+      {
+        "cell": "8839220f47fffff",
+        "lat": 41.157927,
+        "lng": -8.640428
+      }
+    ]
+  },
+  {
+    "res_level": "res8",
+    "h3_sequence": [
+      "8839220f03fffff",
+      "8839220f07fffff",
+      "8839220f03fffff"
+    ],
+    "sequence_length": 3,
+    "trip_support": 72240,
+    "avg_duration_sec": 906.4,
+    "avg_distance_km": 5.03,
+    "avg_speed_kmh": 20.0,
+    "start_h3": "8839220f03fffff",
+    "end_h3": "8839220f03fffff",
+    "cell_coordinates": [
+      {
+        "cell": "8839220f03fffff",
+        "lat": 41.148119,
+        "lng": -8.61297
+      },
+      {
+        "cell": "8839220f07fffff",
+        "lat": 41.141026,
+        "lng": -8.619401
+      },
+      {
+        "cell": "8839220f03fffff",
+        "lat": 41.148119,
+        "lng": -8.61297
+      }
+    ]
+  }
+]
