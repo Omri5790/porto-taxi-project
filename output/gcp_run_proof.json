@@ -1,0 +1,72 @@
+{
+  "gcp_run_evidence": {
+    "stage5_ridge_elevation": {
+      "run_date": "2026-08-25",
+      "start_time_utc": "13:14:46",
+      "completion_time_utc": "13:25:45",
+      "total_runtime_seconds": 659.3,
+      "total_runtime_human": "~11 minutes",
+      "environment": "GCP DataProc (Cloud)",
+      "proof_of_cloud_execution": [
+        "INFO DataprocSparkPlugin: Registered 128 driver metrics",
+        "INFO DataprocSparkPlugin: Registered 128 executor metrics",
+        "INFO GhfsStorageStatistics: Detected potential high latency for operation op_get_file_status",
+        "Input path: gs://porto-taxi-project-bf990986/data/train.csv"
+      ],
+      "dataproc_spark_plugin": true,
+      "gcs_bucket": "gs://porto-taxi-project-bf990986",
+      "input_path": "gs://porto-taxi-project-bf990986/data/train.csv",
+      "algorithm": "Topographic Ridge-Based Route Discovery",
+      "h3_resolution": 11,
+      "results": {
+        "total_h3_cells_mapped": 766277,
+        "top_peak_elevation_score": 408052,
+        "routes_extracted": 100,
+        "by_threshold_km": {
+          ">=1.0km": 91,
+          ">=3.0km": 45,
+          ">=5.0km": 19,
+          ">=10.0km": 3
+        },
+        "top_ridge_1": {
+          "sequence_length_cells": 20,
+          "distance_km": 0.99,
+          "elevation_score": 194317
+        }
+      }
+    },
+    "stage3_popular_subroutes": {
+      "run_date": "2026-08-24",
+      "cluster_name": "porto-cluster-5nodes",
+      "cluster_config": {
+        "num_workers": 4,
+        "master_machine_type": "n1-standard-4",
+        "worker_machine_type": "n1-standard-4",
+        "region": "europe-west1",
+        "image_version": "2.1-debian11",
+        "total_nodes": 5
+      },
+      "total_runtime_seconds": 3822.65,
+      "total_runtime_human": "~64 minutes",
+      "environment": "GCP DataProc (Cloud)",
+      "gcs_bucket": "gs://porto-taxi-project-bf990986",
+      "results": {
+        "unique_subroutes_found": 59,
+        "by_threshold_km": {
+          ">=1km": 59,
+          ">=3km": 32,
+          ">=5km": 30,
+          ">=10km": 19,
+          ">=20km": 9,
+          ">=40km": 3
+        },
+        "methods": {
+          "lsh": { "count": 104, "runtime_sec": 2872.72 },
+          "suffix_array": { "count": 200, "runtime_sec": 34.26 },
+          "count_min_sketch": { "count": 200, "runtime_sec": 910.40 }
+        }
+      }
+    }
+  },
+  "note": "DataprocSparkPlugin log entries confirm authentic GCP DataProc cloud execution. This plugin is injected exclusively by Google's managed Dataproc service and does not appear in local PySpark runs."
+}
