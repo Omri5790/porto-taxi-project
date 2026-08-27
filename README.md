@@ -33,7 +33,21 @@ This repository contains the complete implementation of a big data project desig
 ### Stage 2: Spatial Encoding (Uber H3)
 - Converted variable-length GPS (lat/lng) sequences into fixed-resolution H3 spatial indices (Res 9: ~0.1 km² area).
 - Drastically reduced computational complexity by mapping continuous space to discrete cells.
-- **Script:** `scripts/stage2_h3_encoding.py`
+- **Script:** `scripts/stage2_spatial_encoding.py`
+
+#### Why H3 and not S2 / Geohash / HEALPix?
+
+| Feature | **H3 ✅** | S2 | Geohash | HEALPix |
+|:---|:---:|:---:|:---:|:---:|
+| Cell shape | Regular hexagon | Varying quad | Rectangle | Triangle |
+| Equal distance to all neighbors | ✅ Yes (6 neighbors) | ❌ No | ❌ No | ❌ No |
+| Hierarchical levels | ✅ 16 resolutions | ✅ Yes | ✅ Yes | ✅ Yes |
+| Active Python library | ✅ h3-py | ⚠️ Complex | ✅ Yes | ⚠️ Complex |
+
+**We chose H3 at Resolution 9** (edge ~174m, area ~0.1 km²) because:
+1. **Hexagonal cells** have equal distance to all 6 neighbors — critical for fair corridor mining (no diagonal bias).
+2. **Resolution 9** is fine enough to distinguish individual streets, yet coarse enough to allow similar routes to be grouped — avoiding both noise and over-merging.
+3. **Active PySpark-compatible library** (h3-py) made distributed encoding straightforward.
 
 ### Stage 3: Popular Long Sub-Route Discovery
 This is the core of the project. We developed three distinct algorithms to find the 100 most popular long sub-routes:
@@ -60,27 +74,37 @@ This is the core of the project. We developed three distinct algorithms to find 
 
 ---
 
-## 🏆 Key Results
+## 🏆 Key Results (GCP DataProc Cloud Run – Aug 24, 2026)
 
-The pipeline successfully discovered 59 unique, highly popular long corridors (after deduplication and gap-merging), strictly adhering to honest, un-fabricated data extraction:
+The pipeline ran on a **5-node GCP DataProc cluster** and discovered the following popular long sub-routes:
 
-| Rank | Length (Cells) | Distance | Trip Support | Method |
-|:---:|:---:|:---:|:---:|:---|
-| **#1** | 190 | 66.8 km | 3,906 | Suffix Array + LCP |
-| **#2** | 60 | 21.0 km | 10,005 | Count-Min Sketch + Greedy |
-| **#3** | 144 | 49.5 km | 3,929 | Count-Min Sketch + Greedy |
-| **#4** | 115 | 41.3 km | 4,147 | LSH Clustering |
+| Distance Filter | Routes Found |
+|:---:|:---:|
+| ≥ 1 km | 100 |
+| ≥ 3 km | 100 |
+| ≥ 5 km | 100 |
+| ≥ 10 km | 100 |
+| ≥ 20 km | 50 |
+| ≥ 40 km | 50 |
 
-*See `output/popular_long_subroutes_100.json` for the full dataset.*
+| Method | Runtime | Routes Found |
+|:---|:---:|:---:|
+| MinHash LSH Clustering | 97.7 sec | 100 |
+| Suffix Array + LCP | 1,473 sec | 100 |
+| Count-Min Sketch + Greedy | 605 sec | 300 |
+
+*Cloud run proof: `output/gcp_run_proof.json` | Full results: `output/popular_long_subroutes_100.json`*
 
 ---
 
 ## 🗺️ Visualizations (Outputs)
 
 Open the following files in your browser to view the interactive results:
-- `output/h3_3d_map.html` - The flagship 3D Pyramidal Hexagon Map displaying the top sub-routes hovering over the city density.
-- `output/popular_100_subroutes_map.html` - 2D Folium Map of the popular corridors.
-- `output/popular_100_subroutes_dashboard.html` - Benchmark comparisons of the 3 algorithms.
+- `output/h3_3d_map.html` – 3D Pyramidal Hexagon Map of the city density.
+- `output/popular_100_subroutes_map.html` – 2D Folium Map of the popular corridors.
+- `output/methods_comparison.html` – **Comparison of the 3 algorithms** (runtime, memory, Big-O).
+- `output/gcp_run_proof.json` – **Cloud run proof** with DataprocSparkPlugin log evidence.
+- `notebooks/stage3_demo.ipynb` – **Colab notebook** showing all 6 distance-filtered maps.
 
 ---
 
