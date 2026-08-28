@@ -1,0 +1,30 @@
+{
+  "arterials": {
+    "A1": {
+      "cells": 49,
+      "km": 17.32
+    },
+    "A2": {
+      "cells": 47,
+      "km": 16.77
+    },
+    "A3": {
+      "cells": 45,
+      "km": 15.99
+    },
+    "A4": {
+      "cells": 18,
+      "km": 6.18
+    },
+    "A5_north": {
+      "cells": 37,
+      "km": 13.1
+    },
+    "A5_south": {
+      "cells": 38,
+      "km": 13.46
+    }
+  },
+  "trips": 20000,
+  "popular_share": 0.55
+}

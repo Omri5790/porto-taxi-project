@@ -14,13 +14,9 @@ Optimizations:
 import sys
 import os
 import json
+import argparse
 import time
 from datetime import datetime
-
-# Ensure user site packages are in python path for H3
-user_site = os.path.expanduser("~/Library/Python/3.9/lib/python/site-packages")
-if os.path.exists(user_site) and user_site not in sys.path:
-    sys.path.insert(0, user_site)
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -33,23 +29,24 @@ from pyspark.sql.types import (
     LongType, DoubleType, ArrayType
 )
 
+from scripts.stage3.io_utils import write_json
 from config import (
     LOCAL_CLEANED_PARQUET, LOCAL_SAMPLE_FRACTION
 )
 
-OUTPUT_H3_PARQUET = "output/h3_encoded_trips.parquet"
-OUTPUT_H3_REPORT = "output/h3_encoding_report.json"
+_ap = argparse.ArgumentParser(add_help=False)
+_ap.add_argument("--mode", default="local")
+_ap.add_argument("--sample", action="store_true")
+_ap.add_argument("--input_path", default=None, help="cleaned parquet (local or gs://)")
+_ap.add_argument("--output_path", default=None, help="H3-encoded parquet destination")
+_ap.add_argument("--report_path", default=None, help="encoding report JSON destination")
+_args, _ = _ap.parse_known_args()
 
-MODE = "local"
-SAMPLE = False
-
-if "--mode" in sys.argv:
-    idx = sys.argv.index("--mode")
-    if idx + 1 < len(sys.argv):
-        MODE = sys.argv[idx + 1]
-
-if "--sample" in sys.argv:
-    SAMPLE = True
+MODE = _args.mode
+SAMPLE = _args.sample
+INPUT_PARQUET = _args.input_path or LOCAL_CLEANED_PARQUET
+OUTPUT_H3_PARQUET = _args.output_path or "output/h3_encoded_trips.parquet"
+OUTPUT_H3_REPORT = _args.report_path or "output/h3_encoding_report.json"
 
 
 def create_spark_session():
@@ -167,11 +164,11 @@ def main():
     spark.sparkContext.setLogLevel("WARN")
     
     try:
-        input_parquet = LOCAL_CLEANED_PARQUET
+        input_parquet = INPUT_PARQUET
         print(f"\nSTEP 1: Reading cleaned trips dataset from {input_parquet}...")
         df_clean = spark.read.parquet(input_parquet)
         
-        if MODE == "local" and SAMPLE:
+        if SAMPLE:
             print(f"  Sampling {LOCAL_SAMPLE_FRACTION * 100}% for local testing...")
             df_clean = df_clean.sample(fraction=LOCAL_SAMPLE_FRACTION, seed=42)
             
@@ -255,9 +252,7 @@ def main():
             }
         }
         
-        os.makedirs(os.path.dirname(OUTPUT_H3_REPORT), exist_ok=True)
-        with open(OUTPUT_H3_REPORT, "w", encoding="utf-8") as f:
-            json.dump(h3_report, f, indent=2, ensure_ascii=False)
+        write_json(spark, OUTPUT_H3_REPORT, h3_report)
         print(f"  ✓ H3 Encoding report saved to {OUTPUT_H3_REPORT}")
         
         elapsed = time.time() - start_time

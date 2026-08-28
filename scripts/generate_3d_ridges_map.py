@@ -15,15 +15,14 @@ import pandas as pd
 import pyarrow.parquet as pq
 from collections import Counter
 
-# Ensure user site packages are in python path for H3
-user_site = os.path.expanduser("~/Library/Python/3.9/lib/python/site-packages")
-if os.path.exists(user_site) and user_site not in sys.path:
-    sys.path.insert(0, user_site)
-
 import h3
 
+# Project root on the path so `utils` is importable when run as a script.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.results import load_subroutes
+
 INPUT_H3_PARQUET = "output/h3_encoded_trips.parquet"
-INPUT_SUBROUTES_JSON = "output/top_20_subroutes.json"
+INPUT_SUBROUTES_JSON = "output/stage3_subroutes.json"
 OUTPUT_RIDGES_MAP = "output/h3_3d_ridges_map.html"
 
 
@@ -175,10 +174,9 @@ def generate_3d_ridges():
             
     # 4. Top 20 Ridge Crest Lines
     data_crestlines = []
-    if os.path.exists(INPUT_SUBROUTES_JSON):
-        with open(INPUT_SUBROUTES_JSON, "r", encoding="utf-8") as f:
-            raw_subroutes = json.load(f)
-            
+    raw_subroutes = load_subroutes(INPUT_SUBROUTES_JSON, limit=20)
+    if raw_subroutes:
+        
         colors_rgb = [
             [255, 8, 68], [0, 242, 254], [0, 230, 118], [255, 215, 0],
             [127, 0, 255], [255, 145, 0], [224, 64, 251], [56, 189, 248]
@@ -209,8 +207,8 @@ def generate_3d_ridges():
             data_crestlines.append({
                 "rank": idx + 1,
                 "support": sr["trip_support"],
-                "speed": sr["avg_speed_kmh"],
-                "duration": sr["avg_duration_sec"],
+                "speed": sr.get("avg_speed_kmh") or 0.0,
+                "duration": sr.get("avg_duration_sec") or 0.0,
                 "res_level": res_lvl,
                 "path": path_3d,
                 "color": colors_rgb[idx % len(colors_rgb)]

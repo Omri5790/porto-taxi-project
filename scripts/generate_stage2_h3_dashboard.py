@@ -15,11 +15,6 @@ import pyarrow.parquet as pq
 import folium
 from collections import Counter
 
-# Ensure user site packages are in python path for H3
-user_site = os.path.expanduser("~/Library/Python/3.9/lib/python/site-packages")
-if os.path.exists(user_site) and user_site not in sys.path:
-    sys.path.insert(0, user_site)
-
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

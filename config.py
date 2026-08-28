@@ -11,14 +11,16 @@ LOCAL_DATA_DIR = "data"
 LOCAL_RAW_CSV = f"{LOCAL_DATA_DIR}/train.csv"
 LOCAL_CLEANED_PARQUET = "output/cleaned_trips.parquet"
 LOCAL_H3_PARQUET = "output/h3_encoded_trips.parquet"
+LOCAL_STAGE3_DIR = "output"
 LOCAL_STATS_JSON = "output/cleaning_report.json"
 
 # ──────────────────────────────────────────────
 # Paths (GCS – for DataProc runs)
 # ──────────────────────────────────────────────
-GCS_BUCKET = "gs://porto-taxi-project"  # Update with your actual bucket name
+GCS_BUCKET = "gs://porto-taxi-project-bf990986"  # must match scripts/run_pipeline_dataproc.sh
 GCS_RAW_CSV = f"{GCS_BUCKET}/raw/train.csv"
 GCS_CLEANED_PARQUET = f"{GCS_BUCKET}/cleaned/cleaned_trips.parquet"
+GCS_H3_PARQUET = f"{GCS_BUCKET}/data/h3_encoded_trips.parquet"
 
 # ──────────────────────────────────────────────
 # Porto Geographic Bounding Box
@@ -48,6 +50,16 @@ MAX_SPEED_KMH = 200.0
 # Maximum distance for a single 15-second GPS jump (km)
 # At 200 km/h, you travel ~0.83 km in 15 seconds
 MAX_JUMP_KM = MAX_SPEED_KMH * (15 / 3600)  # ~0.833 km
+
+# Minimum plausible journey.  A "trip" of a few dozen metres is a meter that
+# was started and stopped, not a journey, and it pollutes every distribution.
+MIN_TRIP_KM = 0.2
+
+# Maximum plausible journey.  Greater Porto is roughly 25 x 22 km; a trip of
+# hundreds of kilometres inside that box is a meter left running while the taxi
+# circles.  Such trips pass every other rule and then dominate the tail, which
+# is how a 99th percentile ends up equal to the maximum.
+MAX_TRIP_KM = 100.0
 
 # ──────────────────────────────────────────────
 # Sampling (for local development)

@@ -15,9 +15,10 @@ Key Optimizations:
 import sys
 import os
 import json
+import argparse
 import math
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,23 +30,32 @@ from pyspark.sql.types import (
     LongType, DoubleType, ArrayType
 )
 
+from scripts.stage3.io_utils import write_json
 from config import (
     LOCAL_RAW_CSV, LOCAL_CLEANED_PARQUET, LOCAL_STATS_JSON,
     GCS_RAW_CSV, GCS_CLEANED_PARQUET,
     PORTO_BBOX, MIN_POINTS, MAX_DURATION_SEC, MAX_JUMP_KM,
-    LOCAL_SAMPLE_FRACTION
+    MIN_TRIP_KM, MAX_TRIP_KM, LOCAL_SAMPLE_FRACTION
 )
 
-MODE = "local"
-SAMPLE = False
+# Paths are arguments, not constants.  The previous version hard-coded local
+# paths, which is why a Dataproc run wrote its output to the master node's own
+# disk and lost it when the cluster was deleted.  Passing gs:// URIs here makes
+# every stage cloud-native without a separate code path.
+_ap = argparse.ArgumentParser(add_help=False)
+_ap.add_argument("--mode", default="local")
+_ap.add_argument("--sample", action="store_true")
+_ap.add_argument("--input_path", default=None, help="raw CSV (local path or gs://)")
+_ap.add_argument("--output_path", default=None, help="cleaned parquet destination")
+_ap.add_argument("--report_path", default=None, help="cleaning report JSON destination")
+_args, _ = _ap.parse_known_args()
 
-if "--mode" in sys.argv:
-    idx = sys.argv.index("--mode")
-    if idx + 1 < len(sys.argv):
-        MODE = sys.argv[idx + 1]
-
-if "--sample" in sys.argv:
-    SAMPLE = True
+MODE = _args.mode
+SAMPLE = _args.sample
+INPUT_PATH = _args.input_path or (LOCAL_RAW_CSV if MODE == "local" else GCS_RAW_CSV)
+OUTPUT_PATH = _args.output_path or (LOCAL_CLEANED_PARQUET if MODE == "local"
+                                    else GCS_CLEANED_PARQUET)
+REPORT_PATH = _args.report_path or LOCAL_STATS_JSON
 
 
 def create_spark_session():
@@ -61,112 +71,155 @@ def create_spark_session():
     return builder.getOrCreate()
 
 
-def clean_partition(rows):
+def make_cleaner(counters):
+    """Build the per-partition cleaning function, wired to Spark accumulators.
+
+    The rules are counted, not just applied.  The previous version could apply
+    eight quality rules but could not answer "how many trips did each one
+    remove?" -- which is the first thing anyone asks about a cleaning report.
+    Each rule below increments its own accumulator, so the report is derived
+    from the run rather than asserted alongside it.
     """
-    Process each partition in Python C-space to evaluate all 8 cleaning checks
-    without generating JVM array objects.
-    """
-    min_lng, max_lng = PORTO_BBOX["min_lng"], PORTO_BBOX["max_lng"]
-    min_lat, max_lat = PORTO_BBOX["min_lat"], PORTO_BBOX["max_lat"]
-    max_points = MAX_DURATION_SEC // 15
-    max_jump = MAX_JUMP_KM
-    
-    rad = math.radians
-    sin = math.sin
-    cos = math.cos
-    asin = math.asin
-    sqrt = math.sqrt
-    
-    for row in rows:
-        # Check 1: MISSING_DATA
-        missing = row.MISSING_DATA
-        if missing and str(missing).upper() == "TRUE":
-            continue
-            
-        polyline_str = row.POLYLINE
-        if not polyline_str or polyline_str == "[]" or polyline_str == "":
-            continue
-            
-        # Check 2: JSON Parsing
-        try:
-            coords = json.loads(polyline_str)
-        except Exception:
-            continue
-            
-        # Check 3: Minimum points
-        if not coords or len(coords) < MIN_POINTS:
-            continue
-            
-        # Check 4: Max duration (points count)
-        if len(coords) > max_points:
-            continue
-            
-        start_lng, start_lat = coords[0][0], coords[0][1]
-        end_lng, end_lat = coords[-1][0], coords[-1][1]
-        
-        # Check 5: Bounding Box
-        if not (min_lng <= start_lng <= max_lng and min_lat <= start_lat <= max_lat):
-            continue
-        if not (min_lng <= end_lng <= max_lng and min_lat <= end_lat <= max_lat):
-            continue
-            
-        # Check 6 & 7: Consecutive Deduplication & GPS Jump Check & Haversine Distance
-        clean_coords = [coords[0]]
-        total_dist_km = 0.0
-        has_invalid_jump = False
-        
-        prev_lng, prev_lat = coords[0][0], coords[0][1]
-        
-        for i in range(1, len(coords)):
-            curr_lng, curr_lat = coords[i][0], coords[i][1]
-            
-            # Deduplicate consecutive identical points
-            if curr_lng == prev_lng and curr_lat == prev_lat:
+    def clean_partition(rows):
+        min_lng, max_lng = PORTO_BBOX["min_lng"], PORTO_BBOX["max_lng"]
+        min_lat, max_lat = PORTO_BBOX["min_lat"], PORTO_BBOX["max_lat"]
+        max_points = MAX_DURATION_SEC // 15
+        max_jump = MAX_JUMP_KM
+
+        rad, sin, cos, asin, sqrt = (math.radians, math.sin, math.cos,
+                                     math.asin, math.sqrt)
+
+        for row in rows:
+            counters["read"].add(1)
+
+            # ── Rule 1: the telemetry itself flagged the trip as incomplete ──
+            missing = row.MISSING_DATA
+            if missing and str(missing).upper() == "TRUE":
+                counters["missing_data"].add(1)
                 continue
-                
-            # Calculate Haversine distance
-            dlat = rad(curr_lat - prev_lat)
-            dlng = rad(curr_lng - prev_lng)
-            a = sin(dlat / 2.0)**2 + cos(rad(prev_lat)) * cos(rad(curr_lat)) * sin(dlng / 2.0)**2
-            step_dist_km = 2.0 * 6371.0 * asin(sqrt(a))
-            
-            # Check for GPS Jump (>0.83km / 15s)
-            if step_dist_km > max_jump:
-                has_invalid_jump = True
-                break
-                
-            total_dist_km += step_dist_km
-            clean_coords.append([curr_lng, curr_lat])
-            prev_lng, prev_lat = curr_lng, curr_lat
-            
-        if has_invalid_jump or len(clean_coords) < MIN_POINTS:
-            continue
-            
-        duration_sec = len(clean_coords) * 15
-        avg_speed_kmh = (total_dist_km / (duration_sec / 3600.0)) if duration_sec > 0 else 0.0
-        
-        # Structure coords for Parquet format: list of dicts [{'lng': x, 'lat': y}]
-        struct_coords = [{"lng": pt[0], "lat": pt[1]} for pt in clean_coords]
-        
-        yield (
-            str(row.TRIP_ID),
-            str(row.CALL_TYPE) if row.CALL_TYPE else "",
-            str(row.ORIGIN_CALL) if row.ORIGIN_CALL else "",
-            str(row.ORIGIN_STAND) if row.ORIGIN_STAND else "",
-            int(row.TAXI_ID) if row.TAXI_ID else 0,
-            int(row.TIMESTAMP) if row.TIMESTAMP else 0,
-            str(row.DAY_TYPE) if row.DAY_TYPE else "",
-            polyline_str,
-            struct_coords,
-            len(clean_coords),
-            duration_sec,
-            float(round(total_dist_km, 4)),
-            float(round(start_lng, 6)),
-            float(round(start_lat, 6)),
-            float(round(end_lng, 6)),
-            float(round(end_lat, 6)),
-            float(round(avg_speed_kmh, 2))
-        )
+
+            # ── Rule 2: empty or unparseable polyline ───────────────────────
+            polyline_str = row.POLYLINE
+            if not polyline_str or polyline_str in ("[]", ""):
+                counters["empty_polyline"].add(1)
+                continue
+            try:
+                coords = json.loads(polyline_str)
+            except Exception:
+                counters["bad_json"].add(1)
+                continue
+
+            # ── Rule 3: a single point is a location, not a route ───────────
+            n_raw = len(coords)
+            if n_raw < MIN_POINTS:
+                counters["too_few_points"].add(1)
+                continue
+
+            # ── Rule 4: meter left running / hardware fault ─────────────────
+            if n_raw > max_points:
+                counters["too_long"].add(1)
+                continue
+
+            # ── Rule 5: any point outside the Porto bounding box ────────────
+            # Checking only the endpoints, as the previous version did, lets a
+            # mid-trip satellite glitch into the Atlantic survive -- and that
+            # single bad point then distorts the distance and the H3 sequence.
+            out_of_box = False
+            for c in coords:
+                if not (min_lng <= c[0] <= max_lng and min_lat <= c[1] <= max_lat):
+                    out_of_box = True
+                    break
+            if out_of_box:
+                counters["out_of_bbox"].add(1)
+                continue
+
+            # ── Rules 6 & 7: consecutive duplicates, and implausible jumps ──
+            clean_coords = [coords[0]]
+            total_dist_km = 0.0
+            has_invalid_jump = False
+            prev_lng, prev_lat = coords[0][0], coords[0][1]
+
+            for i in range(1, n_raw):
+                curr_lng, curr_lat = coords[i][0], coords[i][1]
+
+                # A stationary taxi keeps transmitting the same fix; collapsing
+                # those removes computational noise.  Note that the ELAPSED TIME
+                # is preserved separately below -- the points are dropped, the
+                # clock is not.
+                if curr_lng == prev_lng and curr_lat == prev_lat:
+                    continue
+
+                dlat = rad(curr_lat - prev_lat)
+                dlng = rad(curr_lng - prev_lng)
+                a = (sin(dlat / 2.0) ** 2
+                     + cos(rad(prev_lat)) * cos(rad(curr_lat)) * sin(dlng / 2.0) ** 2)
+                step_dist_km = 2.0 * 6371.0 * asin(sqrt(a))
+
+                if step_dist_km > max_jump:
+                    has_invalid_jump = True
+                    break
+
+                total_dist_km += step_dist_km
+                clean_coords.append([curr_lng, curr_lat])
+                prev_lng, prev_lat = curr_lng, curr_lat
+
+            if has_invalid_jump:
+                counters["gps_jump"].add(1)
+                continue
+
+            # ── Rule 8: still a route after removing stationary duplicates ──
+            if len(clean_coords) < MIN_POINTS:
+                counters["stationary"].add(1)
+                continue
+
+            # ── Duration: from the ORIGINAL sample count ────────────────────
+            # n samples at a fixed 15-second interval span (n-1) intervals.
+            # Deriving this from the DEDUPLICATED count -- as the previous
+            # version did -- silently erases every second a taxi spent at a red
+            # light, which shortens the trip and inflates its mean speed.
+            duration_sec = (n_raw - 1) * 15
+
+            # ── Rule 9: a "trip" of a few metres is not a trip ──────────────
+            if total_dist_km < MIN_TRIP_KM:
+                counters["too_short_distance"].add(1)
+                continue
+
+            # ── Rule 10: implausibly long for a city 25 km across ───────────
+            # These are meters left running while a taxi circles for hours.
+            # They pass every rule above and then dominate the tail of the
+            # distance distribution, which is how a P99 ends up equal to the
+            # maximum.
+            if total_dist_km > MAX_TRIP_KM:
+                counters["too_long_distance"].add(1)
+                continue
+
+            avg_speed_kmh = (total_dist_km / (duration_sec / 3600.0)) if duration_sec > 0 else 0.0
+
+            counters["kept"].add(1)
+            struct_coords = [{"lng": pt[0], "lat": pt[1]} for pt in clean_coords]
+
+            yield (
+                str(row.TRIP_ID),
+                str(row.CALL_TYPE) if row.CALL_TYPE else "",
+                str(row.ORIGIN_CALL) if row.ORIGIN_CALL else "",
+                str(row.ORIGIN_STAND) if row.ORIGIN_STAND else "",
+                int(row.TAXI_ID) if row.TAXI_ID else 0,
+                int(row.TIMESTAMP) if row.TIMESTAMP else 0,
+                str(row.DAY_TYPE) if row.DAY_TYPE else "",
+                polyline_str,
+                struct_coords,
+                len(clean_coords),
+                int(n_raw),
+                duration_sec,
+                float(round(total_dist_km, 4)),
+                float(round(coords[0][0], 6)),
+                float(round(coords[0][1], 6)),
+                float(round(coords[-1][0], 6)),
+                float(round(coords[-1][1], 6)),
+                float(round(avg_speed_kmh, 2))
+            )
+
+    return clean_partition
 
 
 def main():
@@ -182,7 +235,7 @@ def main():
     spark.sparkContext.setLogLevel("WARN")
     
     try:
-        csv_path = LOCAL_RAW_CSV if MODE == "local" else GCS_RAW_CSV
+        csv_path = INPUT_PATH
         print(f"\nSTEP 1: Loading raw dataset from {csv_path}...")
         
         raw_schema = StructType([
@@ -201,13 +254,19 @@ def main():
             csv_path, header=True, schema=raw_schema, quote='"', escape='"', multiLine=True
         )
         
-        if MODE == "local" and SAMPLE:
+        if SAMPLE:
             print(f"  Sampling {LOCAL_SAMPLE_FRACTION * 100}% for local development...")
             df_raw = df_raw.sample(fraction=LOCAL_SAMPLE_FRACTION, seed=42)
             
         print("\nSTEP 2: Processing 1.71M trips in PySpark mapPartitions across CPU cores...")
         
-        cleaned_rdd = df_raw.rdd.mapPartitions(clean_partition)
+        rule_names = ["read", "missing_data", "empty_polyline", "bad_json",
+                      "too_few_points", "too_long", "out_of_bbox", "gps_jump",
+                      "stationary", "too_short_distance", "too_long_distance",
+                      "kept"]
+        counters = {name: spark.sparkContext.accumulator(0) for name in rule_names}
+
+        cleaned_rdd = df_raw.rdd.mapPartitions(make_cleaner(counters))
         
         clean_schema = StructType([
             StructField("TRIP_ID", StringType(), True),
@@ -225,6 +284,7 @@ def main():
                 ])
             ), True),
             StructField("num_points", IntegerType(), True),
+            StructField("num_points_raw", IntegerType(), True),
             StructField("duration_sec", IntegerType(), True),
             StructField("distance_km", DoubleType(), True),
             StructField("start_lng", DoubleType(), True),
@@ -246,41 +306,106 @@ def main():
         
         total_clean = df_clean.count()
         print(f"  ✓ Stage 1 Cleaning completed! Valid clean trips: {total_clean:,}")
-        
+
+        # Accumulators are only meaningful after an action, and they double-count
+        # if the stage is recomputed -- so they are read once, here, immediately
+        # after the count that materialised the persisted DataFrame.
+        rules = {name: acc.value for name, acc in counters.items()}
+        total_read = rules.pop("read")
+        kept = rules.pop("kept")
+        removed = total_read - kept
+
+        RULE_LABELS = {
+            "missing_data":       "1. MISSING_DATA flag set by the telemetry",
+            "empty_polyline":     "2. empty POLYLINE (booking cancelled immediately)",
+            "bad_json":           "2b. POLYLINE not valid JSON",
+            "too_few_points":     "3. fewer than 2 GPS points",
+            "too_long":           "4. duration over 24 hours (meter left running)",
+            "out_of_bbox":        "5. a GPS point outside the Porto bounding box",
+            "gps_jump":           "6. jump implying over 200 km/h (satellite error)",
+            "stationary":         "7. under 2 distinct points after deduplication",
+            "too_short_distance": f"8. shorter than {MIN_TRIP_KM} km (not a journey)",
+            "too_long_distance":  f"9. longer than {MAX_TRIP_KM} km (implausible for this city)",
+        }
+
+        print("\n  Per-rule breakdown:")
+        print(f"    {'rule':<62}{'trips':>10}{'share':>9}")
+        for key, label in RULE_LABELS.items():
+            n = rules.get(key, 0)
+            pct = 100.0 * n / total_read if total_read else 0.0
+            print(f"    {label:<62}{n:>10,}{pct:>8.3f}%")
+        print(f"    {'-' * 81}")
+        print(f"    {'removed':<62}{removed:>10,}{100.0 * removed / max(total_read, 1):>8.3f}%")
+        print(f"    {'kept':<62}{kept:>10,}{100.0 * kept / max(total_read, 1):>8.3f}%")
+
         # STEP 3: Generate Summary Statistics
         print("\nSTEP 3: Generating Statistics...")
         num_taxis = df_clean.select("TAXI_ID").distinct().count()
         print(f"  Overview: {total_clean:,} trips, {num_taxis:,} unique taxis")
-        
-        df_clean.select("num_points", "duration_sec", "distance_km", "avg_speed_kmh").describe().show()
-        
-        percentiles = df_clean.approxQuantile("distance_km", [0.25, 0.5, 0.75, 0.9, 0.95, 0.99], 0.01)
-        print("  Distance Percentiles (km):")
-        for p, v in zip([25, 50, 75, 90, 95, 99], percentiles):
-            print(f"    P{p}: {v:.2f} km")
-            
+
+        df_clean.select("num_points", "num_points_raw", "duration_sec",
+                        "distance_km", "avg_speed_kmh").describe().show()
+
+        # relativeError 1e-4, not 1e-2.  At 1e-2 the reported P99 can land on the
+        # maximum of a long-tailed distribution, which is what made the previous
+        # report show "P99 = 617 km" -- a figure equal to the single most extreme
+        # trip in the dataset.
+        QS = [0.01, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99]
+        percentiles = df_clean.approxQuantile("distance_km", QS, 1e-4)
+        dur_pct = df_clean.approxQuantile("duration_sec", QS, 1e-4)
+        labels = ["p1", "p25", "p50", "p75", "p90", "p95", "p99"]
+        print("  Distance percentiles (km):")
+        for lab, v in zip(labels, percentiles):
+            print(f"    {lab:>4}: {v:8.3f} km")
+
+        max_dist = df_clean.agg(F.max("distance_km")).first()[0]
+        dedup_ratio = df_clean.agg(
+            F.avg(F.col("num_points") / F.col("num_points_raw"))).first()[0]
+
         cleaning_report = {
             "summary": {
-                "final_clean_trips": total_clean,
+                "raw_trips_read": total_read,
+                "final_clean_trips": kept,
+                "removed_trips": removed,
+                "removed_pct": round(100.0 * removed / max(total_read, 1), 4),
                 "unique_taxis": num_taxis,
-                "distance_percentiles_km": dict(zip(
-                    ["p25", "p50", "p75", "p90", "p95", "p99"],
-                    [round(v, 4) for v in percentiles]
-                ))
-            }
+                "mean_points_kept_after_dedup": round(dedup_ratio, 4)
+                if dedup_ratio is not None else None,
+            },
+            "per_rule_removed": {
+                key: {"label": label, "trips": rules.get(key, 0),
+                      "pct_of_raw": round(100.0 * rules.get(key, 0) / max(total_read, 1), 4)}
+                for key, label in RULE_LABELS.items()
+            },
+            "thresholds": {
+                "porto_bbox": PORTO_BBOX,
+                "min_points": MIN_POINTS,
+                "max_duration_sec": MAX_DURATION_SEC,
+                "max_jump_km": round(MAX_JUMP_KM, 4),
+                "min_trip_km": MIN_TRIP_KM,
+                "max_trip_km": MAX_TRIP_KM,
+            },
+            "distance_percentiles_km": dict(zip(labels, [round(v, 4) for v in percentiles])),
+            "duration_percentiles_sec": dict(zip(labels, [round(v, 1) for v in dur_pct])),
+            "max_distance_km": round(max_dist, 4) if max_dist is not None else None,
+            "notes": {
+                "duration": "derived from the ORIGINAL sample count: (n_raw - 1) * 15 s. "
+                            "Deduplication removes stationary points but not the time "
+                            "they represent.",
+                "quantiles": "approxQuantile with relativeError=1e-4.",
+            },
+            "generated_utc": datetime.now(timezone.utc).isoformat(),
         }
         
         # STEP 4: Save Parquet & Statistics JSON
-        output_path = LOCAL_CLEANED_PARQUET if MODE == "local" else GCS_CLEANED_PARQUET
-        report_path = LOCAL_STATS_JSON
+        output_path = OUTPUT_PATH
+        report_path = REPORT_PATH
         
         print(f"\nSTEP 4: Saving Parquet to {output_path}...")
         df_clean.write.mode("overwrite").parquet(output_path)
         print(f"  ✓ Saved Parquet successfully!")
         
-        os.makedirs(os.path.dirname(report_path), exist_ok=True)
-        with open(report_path, "w", encoding="utf-8") as f:
-            json.dump(cleaning_report, f, indent=2, ensure_ascii=False)
+        write_json(spark, report_path, cleaning_report)
         print(f"  ✓ Cleaning report saved to {report_path}")
         
         elapsed = time.time() - start_time

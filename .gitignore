@@ -1,23 +1,29 @@
-# Large Data Files (Ignore raw CSV and generated Parquet files - GitHub 100MB limit)
-data/train.csv
-data/*.csv
-data/*.zip
+# Raw data and generated Parquet — too large for git
+data/
 output/*.parquet
 output/**/*.parquet
+output/synthetic_h3.parquet
+# regenerated beside the parquet; the tracked copy lives in output/synthetic_run/
+output/synthetic_h3_truth.json
 
-# Spark & Python Cache
+# Results pulled down from a cluster run live in output/ as JSON and ARE tracked.
+
+# Spark
 spark-warehouse/
 .spark-staging/
+derby.log
+metastore_db/
+
+# Python
 __pycache__/
 *.pyc
+.pytest_cache/
 .ipynb_checkpoints/
-
-# Virtual Environments
 venv/
 .venv/
 env/
 
-# OS Files
+# OS / editors
 .DS_Store
 .vscode/
 .idea/

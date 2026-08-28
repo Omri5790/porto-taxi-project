@@ -19,9 +19,6 @@ import h3
 from pyspark.sql import SparkSession
 from pyspark.sql import Row
 
-user_site = os.path.expanduser("~/Library/Python/3.9/lib/python/site-packages")
-if os.path.exists(user_site) and user_site not in sys.path:
-    sys.path.insert(0, user_site)
 
 INPUT_CSV = "data/train.csv"
 OUTPUT_JSON = "output/ridge_elevation_routes.json"

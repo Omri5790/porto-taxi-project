@@ -17,15 +17,14 @@ import pandas as pd
 import pyarrow.parquet as pq
 from collections import Counter
 
-# Ensure user site packages are in python path for H3
-user_site = os.path.expanduser("~/Library/Python/3.9/lib/python/site-packages")
-if os.path.exists(user_site) and user_site not in sys.path:
-    sys.path.insert(0, user_site)
-
 import h3
 
+# Project root on the path so `utils` is importable when run as a script.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.results import load_subroutes
+
 INPUT_TEMPORAL_JSON = "output/temporal_subroutes.json"
-INPUT_SUBROUTES_JSON = "output/top_20_subroutes.json"
+INPUT_SUBROUTES_JSON = "output/stage3_subroutes.json"
 INPUT_H3_PARQUET = "output/h3_encoded_trips.parquet"
 OUTPUT_TEMPORAL_MAP = "output/h3_3d_temporal_map.html"
 
@@ -50,11 +49,8 @@ def generate_3d_temporal_map():
     with open(INPUT_TEMPORAL_JSON, "r", encoding="utf-8") as f:
         temporal_subroutes = json.load(f)
         
-    raw_allday = []
-    if os.path.exists(INPUT_SUBROUTES_JSON):
-        with open(INPUT_SUBROUTES_JSON, "r", encoding="utf-8") as f:
-            raw_allday = json.load(f)
-            
+    raw_allday = load_subroutes(INPUT_SUBROUTES_JSON, limit=20)
+
     print("\n1. Loading H3-encoded dataset for 100% full dataset base density...")
     table = pq.read_table(
         INPUT_H3_PARQUET,

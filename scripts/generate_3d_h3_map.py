@@ -15,15 +15,14 @@ import pandas as pd
 import pyarrow.parquet as pq
 from collections import Counter
 
-# Ensure user site packages are in python path for H3
-user_site = os.path.expanduser("~/Library/Python/3.9/lib/python/site-packages")
-if os.path.exists(user_site) and user_site not in sys.path:
-    sys.path.insert(0, user_site)
-
 import h3
 
+# Project root on the path so `utils` is importable when run as a script.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.results import load_subroutes
+
 INPUT_H3_PARQUET = "output/h3_encoded_trips.parquet"
-INPUT_100_SUBROUTES_JSON = "output/popular_long_subroutes_100.json"
+INPUT_100_SUBROUTES_JSON = "output/stage3_subroutes.json"
 OUTPUT_3D_MAP = "output/h3_3d_map.html"
 
 
@@ -160,11 +159,8 @@ def generate_3d_map():
         [45, 212, 191, 255], [251, 113, 133, 255], [129, 140, 248, 255], [74, 222, 128, 255]
     ]
     
-    if os.path.exists(INPUT_100_SUBROUTES_JSON):
-        with open(INPUT_100_SUBROUTES_JSON, "r", encoding="utf-8") as f:
-            payload = json.load(f)
-            raw_100 = payload.get("master_top100", [])
-            
+    raw_100 = load_subroutes(INPUT_100_SUBROUTES_JSON, limit=100)
+    if raw_100:
         for idx, sr in enumerate(raw_100):
             coords = sr.get("cell_coordinates", [])
             if len(coords) < 2:
@@ -191,9 +187,9 @@ def generate_3d_map():
             data_subroutes_100.append({
                 "rank": int(idx + 1),
                 "support": int(sr.get("trip_support", 0)),
-                "speed": float(sr.get("avg_speed_kmh", 0.0)),
+                "speed": float(sr.get("avg_speed_kmh") or 0.0),
                 "distance": float(sr.get("avg_distance_km", 0.0)),
-                "duration": float(sr.get("avg_duration_sec", 0.0)),
+                "duration": float(sr.get("avg_duration_sec") or 0.0),
                 "seq_len": int(sr.get("sequence_length", 0)),
                 "path": path_3d,
                 "color": color

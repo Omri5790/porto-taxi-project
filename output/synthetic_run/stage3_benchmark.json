@@ -1,0 +1,657 @@
+{
+  "methods": {
+    "gate": {
+      "k": 4,
+      "min_support_trips": 60,
+      "ngrams_streamed": 557823,
+      "cms": {
+        "geometry": "5 x 838860",
+        "memory_mb": 32.0,
+        "epsilon": 3.24e-06,
+        "delta": 0.00674,
+        "total_mass": 557823,
+        "additive_error_estimate": 1,
+        "additive_error_pct_of_support": 3.013
+      },
+      "cms_memory_mb": 32.0,
+      "cms_build_sec": 5.08,
+      "candidates_after_cms": 386,
+      "exact_frequent": 386,
+      "pruned_before_shuffle_pct": 99.9308,
+      "cms_false_positive_pct": 0.0,
+      "bloom_bits": 3704,
+      "bloom_hashes": 7,
+      "bloom_memory_kb": 0.5,
+      "bloom_observed_fp_rate": 0.01013,
+      "runtime_sec": 11.58
+    },
+    "method_a_lsh_clustering": {
+      "algorithm": "MinHash + LSH clustering of trajectory segments",
+      "approximate_structures": [
+        "MinHash signature (32 hashes)",
+        "LSH banding (8 bands x 4 rows, similarity threshold ~0.59)",
+        "DistinctCounter (exact <=64 trips, then HyperLogLog b=12, ~1.6% error) for distinct-trip support"
+      ],
+      "window_cells": 12,
+      "stride": 3,
+      "lsh_similarity_threshold": 0.5946,
+      "windows_hashed": 139566,
+      "band_emissions": 1116528,
+      "buckets_above_support": 786,
+      "representatives": 200,
+      "min_support_trips": 60,
+      "runtime_sec": 31.37,
+      "distributed": true
+    },
+    "method_b_suffix_array": {
+      "algorithm": "Generalised suffix array + LCP array (prefix-bucketed, distributed)",
+      "approximate_structures": [
+        "Bloom filter over frequent 4-grams (0.5 KB, p~0.0101) used as an anti-monotone prefix gate before the shuffle"
+      ],
+      "prefix_bucket_cells": 2,
+      "max_suffix_cells": 40,
+      "min_repeat_cells": 5,
+      "suffix_positions_considered": 538369,
+      "suffixes_emitted": 285384,
+      "bloom_pruned_pct": 46.991,
+      "distinct_repeats_found": 3863,
+      "candidates": 3863,
+      "min_support_trips": 60,
+      "runtime_sec": 6.09,
+      "distributed": true,
+      "exact_within_scope": true
+    },
+    "method_c_growth": {
+      "algorithm": "Count-Min pruned level-wise growth with per-round verified support",
+      "approximate_structures": [
+        "Count-Min Sketch (via the shared gate) removes infrequent seeds before any shuffle",
+        "Bloom filter over frequent 4-grams gates extension candidates inside the map task (anti-monotone, no false negatives)"
+      ],
+      "seeds": 386,
+      "rounds_run": 35,
+      "growth_direction": "forward only (leftward growth is redundant by anti-monotonicity)",
+      "max_step_cells": 4,
+      "branches_per_corridor": 2,
+      "beam_width": 600,
+      "max_beam_overlap": 0.75,
+      "max_gap_cells": 8,
+      "surviving_extension_keys": 16720,
+      "corridors_returned": 144,
+      "min_support_trips": 60,
+      "support_is_measured_each_round": true,
+      "round_log": [
+        {
+          "round": 1,
+          "frontier_in": 298,
+          "surviving_extensions": 2708,
+          "distinct_children": 375,
+          "after_overlap_pruning": 116,
+          "frontier_out": 116,
+          "maximal_so_far": 110
+        },
+        {
+          "round": 2,
+          "frontier_in": 116,
+          "surviving_extensions": 1609,
+          "distinct_children": 228,
+          "after_overlap_pruning": 114,
+          "frontier_out": 114,
+          "maximal_so_far": 112
+        },
+        {
+          "round": 3,
+          "frontier_in": 114,
+          "surviving_extensions": 1563,
+          "distinct_children": 221,
+          "after_overlap_pruning": 110,
+          "frontier_out": 110,
+          "maximal_so_far": 115
+        },
+        {
+          "round": 4,
+          "frontier_in": 110,
+          "surviving_extensions": 1515,
+          "distinct_children": 216,
+          "after_overlap_pruning": 108,
+          "frontier_out": 108,
+          "maximal_so_far": 117
+        },
+        {
+          "round": 5,
+          "frontier_in": 108,
+          "surviving_extensions": 1453,
+          "distinct_children": 209,
+          "after_overlap_pruning": 68,
+          "frontier_out": 68,
+          "maximal_so_far": 120
+        },
+        {
+          "round": 6,
+          "frontier_in": 68,
+          "surviving_extensions": 907,
+          "distinct_children": 134,
+          "after_overlap_pruning": 67,
+          "frontier_out": 67,
+          "maximal_so_far": 121
+        },
+        {
+          "round": 7,
+          "frontier_in": 67,
+          "surviving_extensions": 846,
+          "distinct_children": 127,
+          "after_overlap_pruning": 64,
+          "frontier_out": 64,
+          "maximal_so_far": 124
+        },
+        {
+          "round": 8,
+          "frontier_in": 64,
+          "surviving_extensions": 824,
+          "distinct_children": 126,
+          "after_overlap_pruning": 63,
+          "frontier_out": 63,
+          "maximal_so_far": 125
+        },
+        {
+          "round": 9,
+          "frontier_in": 63,
+          "surviving_extensions": 810,
+          "distinct_children": 124,
+          "after_overlap_pruning": 43,
+          "frontier_out": 43,
+          "maximal_so_far": 126
+        },
+        {
+          "round": 10,
+          "frontier_in": 43,
+          "surviving_extensions": 550,
+          "distinct_children": 84,
+          "after_overlap_pruning": 41,
+          "frontier_out": 41,
+          "maximal_so_far": 127
+        },
+        {
+          "round": 11,
+          "frontier_in": 41,
+          "surviving_extensions": 506,
+          "distinct_children": 76,
+          "after_overlap_pruning": 38,
+          "frontier_out": 38,
+          "maximal_so_far": 130
+        },
+        {
+          "round": 12,
+          "frontier_in": 38,
+          "surviving_extensions": 488,
+          "distinct_children": 76,
+          "after_overlap_pruning": 38,
+          "frontier_out": 38,
+          "maximal_so_far": 130
+        },
+        {
+          "round": 13,
+          "frontier_in": 38,
+          "surviving_extensions": 474,
+          "distinct_children": 73,
+          "after_overlap_pruning": 25,
+          "frontier_out": 25,
+          "maximal_so_far": 131
+        },
+        {
+          "round": 14,
+          "frontier_in": 25,
+          "surviving_extensions": 304,
+          "distinct_children": 46,
+          "after_overlap_pruning": 23,
+          "frontier_out": 23,
+          "maximal_so_far": 133
+        },
+        {
+          "round": 15,
+          "frontier_in": 23,
+          "surviving_extensions": 298,
+          "distinct_children": 44,
+          "after_overlap_pruning": 22,
+          "frontier_out": 22,
+          "maximal_so_far": 134
+        },
+        {
+          "round": 16,
+          "frontier_in": 22,
+          "surviving_extensions": 291,
+          "distinct_children": 44,
+          "after_overlap_pruning": 22,
+          "frontier_out": 22,
+          "maximal_so_far": 134
+        },
+        {
+          "round": 17,
+          "frontier_in": 22,
+          "surviving_extensions": 276,
+          "distinct_children": 44,
+          "after_overlap_pruning": 15,
+          "frontier_out": 15,
+          "maximal_so_far": 134
+        },
+        {
+          "round": 18,
+          "frontier_in": 15,
+          "surviving_extensions": 179,
+          "distinct_children": 29,
+          "after_overlap_pruning": 15,
+          "frontier_out": 15,
+          "maximal_so_far": 134
+        },
+        {
+          "round": 19,
+          "frontier_in": 15,
+          "surviving_extensions": 157,
+          "distinct_children": 25,
+          "after_overlap_pruning": 13,
+          "frontier_out": 13,
+          "maximal_so_far": 136
+        },
+        {
+          "round": 20,
+          "frontier_in": 13,
+          "surviving_extensions": 144,
+          "distinct_children": 23,
+          "after_overlap_pruning": 12,
+          "frontier_out": 12,
+          "maximal_so_far": 137
+        },
+        {
+          "round": 21,
+          "frontier_in": 12,
+          "surviving_extensions": 132,
+          "distinct_children": 21,
+          "after_overlap_pruning": 9,
+          "frontier_out": 9,
+          "maximal_so_far": 138
+        },
+        {
+          "round": 22,
+          "frontier_in": 9,
+          "surviving_extensions": 102,
+          "distinct_children": 14,
+          "after_overlap_pruning": 7,
+          "frontier_out": 7,
+          "maximal_so_far": 140
+        },
+        {
+          "round": 23,
+          "frontier_in": 7,
+          "surviving_extensions": 101,
+          "distinct_children": 14,
+          "after_overlap_pruning": 7,
+          "frontier_out": 7,
+          "maximal_so_far": 140
+        },
+        {
+          "round": 24,
+          "frontier_in": 7,
+          "surviving_extensions": 99,
+          "distinct_children": 14,
+          "after_overlap_pruning": 7,
+          "frontier_out": 7,
+          "maximal_so_far": 140
+        },
+        {
+          "round": 25,
+          "frontier_in": 7,
+          "surviving_extensions": 96,
+          "distinct_children": 14,
+          "after_overlap_pruning": 5,
+          "frontier_out": 5,
+          "maximal_so_far": 140
+        },
+        {
+          "round": 26,
+          "frontier_in": 5,
+          "surviving_extensions": 65,
+          "distinct_children": 10,
+          "after_overlap_pruning": 5,
+          "frontier_out": 5,
+          "maximal_so_far": 140
+        },
+        {
+          "round": 27,
+          "frontier_in": 5,
+          "surviving_extensions": 58,
+          "distinct_children": 10,
+          "after_overlap_pruning": 5,
+          "frontier_out": 5,
+          "maximal_so_far": 140
+        },
+        {
+          "round": 28,
+          "frontier_in": 5,
+          "surviving_extensions": 52,
+          "distinct_children": 10,
+          "after_overlap_pruning": 5,
+          "frontier_out": 5,
+          "maximal_so_far": 140
+        },
+        {
+          "round": 29,
+          "frontier_in": 5,
+          "surviving_extensions": 38,
+          "distinct_children": 10,
+          "after_overlap_pruning": 4,
+          "frontier_out": 4,
+          "maximal_so_far": 140
+        },
+        {
+          "round": 30,
+          "frontier_in": 4,
+          "surviving_extensions": 24,
+          "distinct_children": 6,
+          "after_overlap_pruning": 3,
+          "frontier_out": 3,
+          "maximal_so_far": 141
+        },
+        {
+          "round": 31,
+          "frontier_in": 3,
+          "surviving_extensions": 21,
+          "distinct_children": 4,
+          "after_overlap_pruning": 2,
+          "frontier_out": 2,
+          "maximal_so_far": 142
+        },
+        {
+          "round": 32,
+          "frontier_in": 2,
+          "surviving_extensions": 16,
+          "distinct_children": 4,
+          "after_overlap_pruning": 2,
+          "frontier_out": 2,
+          "maximal_so_far": 142
+        },
+        {
+          "round": 33,
+          "frontier_in": 2,
+          "surviving_extensions": 11,
+          "distinct_children": 4,
+          "after_overlap_pruning": 2,
+          "frontier_out": 2,
+          "maximal_so_far": 142
+        },
+        {
+          "round": 34,
+          "frontier_in": 2,
+          "surviving_extensions": 3,
+          "distinct_children": 3,
+          "after_overlap_pruning": 2,
+          "frontier_out": 2,
+          "maximal_so_far": 142
+        },
+        {
+          "round": 35,
+          "frontier_in": 2,
+          "surviving_extensions": 0,
+          "distinct_children": 0,
+          "after_overlap_pruning": 0,
+          "frontier_out": 0,
+          "maximal_so_far": 144
+        }
+      ],
+      "runtime_sec": 144.79,
+      "distributed": true
+    },
+    "per_method_scorecard": {
+      "cms_growth": {
+        "corridors_verified": 27,
+        "max_length_km": 15.6,
+        "mean_length_km": 7.06,
+        "mean_cells": 18.9,
+        "max_support": 437,
+        "mean_support": 236,
+        "with_holes": 9,
+        "mean_tortuosity": 1.207,
+        "support_overestimate_pct": 0.0,
+        "ge_1km": 27,
+        "ge_3km": 23,
+        "ge_5km": 15,
+        "ge_10km": 8,
+        "ge_20km": 0,
+        "ge_40km": 0
+      },
+      "lsh_clustering": {
+        "corridors_verified": 157,
+        "max_length_km": 4.02,
+        "mean_length_km": 4.0,
+        "mean_cells": 12.0,
+        "max_support": 2432,
+        "mean_support": 1112,
+        "with_holes": 0,
+        "mean_tortuosity": 1.288,
+        "support_overestimate_pct": 9.0,
+        "ge_1km": 157,
+        "ge_3km": 157,
+        "ge_5km": 0,
+        "ge_10km": 0,
+        "ge_20km": 0,
+        "ge_40km": 0
+      },
+      "suffix_array_lcp": {
+        "corridors_verified": 666,
+        "max_length_km": 14.22,
+        "mean_length_km": 11.45,
+        "mean_cells": 32.5,
+        "max_support": 1412,
+        "mean_support": 525,
+        "with_holes": 0,
+        "mean_tortuosity": 1.28,
+        "support_overestimate_pct": 0.0,
+        "ge_1km": 666,
+        "ge_3km": 666,
+        "ge_5km": 666,
+        "ge_10km": 576,
+        "ge_20km": 0,
+        "ge_40km": 0
+      }
+    },
+    "anomaly_detection": {
+      "algorithm": "Bloom-filtered transition novelty + HyperLogLog taxi diversity",
+      "approximate_structures": [
+        "Bloom filter over frequent transitions (2.7 KB, p~0.0103) broadcast instead of the exact set",
+        "HyperLogLog (b=8, 256 B per cell) for distinct taxis per cell"
+      ],
+      "trips_scored": 19973,
+      "min_trip_cells": 8,
+      "top_n": 100,
+      "runtime_sec": 4.36,
+      "distributed": true,
+      "transition_gate": {
+        "k": 2,
+        "min_support_trips": 20,
+        "ngrams_streamed": 576804,
+        "cms": {
+          "geometry": "5 x 838860",
+          "memory_mb": 32.0,
+          "epsilon": 3.24e-06,
+          "delta": 0.00674,
+          "total_mass": 576804,
+          "additive_error_estimate": 1,
+          "additive_error_pct_of_support": 9.346
+        },
+        "cms_memory_mb": 32.0,
+        "cms_build_sec": 3.44,
+        "candidates_after_cms": 2266,
+        "exact_frequent": 2266,
+        "pruned_before_shuffle_pct": 99.6071,
+        "cms_false_positive_pct": 0.0,
+        "bloom_bits": 21720,
+        "bloom_hashes": 7,
+        "bloom_memory_kb": 2.7,
+        "bloom_observed_fp_rate": 0.01026,
+        "runtime_sec": 9.05
+      }
+    }
+  },
+  "pipeline": {
+    "total_trips": 20000,
+    "candidates_verified": 893,
+    "corridors_reported": 46,
+    "verification_sec": 1.78,
+    "total_runtime_sec": 218.64
+  },
+  "thresholds": {
+    "1": {
+      "found": 46,
+      "support_pct_used": 0.3,
+      "met_target": false
+    },
+    "3": {
+      "found": 46,
+      "support_pct_used": 0.3,
+      "met_target": false
+    },
+    "5": {
+      "found": 39,
+      "support_pct_used": 0.3,
+      "met_target": false
+    },
+    "10": {
+      "found": 38,
+      "support_pct_used": 0.3,
+      "met_target": false
+    },
+    "20": {
+      "found": 0,
+      "support_pct_used": 0.3,
+      "met_target": false
+    },
+    "40": {
+      "found": 0,
+      "support_pct_used": 0.3,
+      "met_target": false
+    }
+  },
+  "support_sweep": [
+    {
+      "support_pct": 0.05,
+      "min_trips": 10,
+      "corridors": 46,
+      "below_mining_floor": true,
+      "max_length_km": 15.6,
+      "mean_length_km": 11.91,
+      "mean_cells": 32.9,
+      "ge_1km": 46,
+      "ge_3km": 46,
+      "ge_5km": 39,
+      "ge_10km": 38,
+      "ge_20km": 0,
+      "ge_40km": 0
+    },
+    {
+      "support_pct": 0.1,
+      "min_trips": 20,
+      "corridors": 46,
+      "below_mining_floor": true,
+      "max_length_km": 15.6,
+      "mean_length_km": 11.91,
+      "mean_cells": 32.9,
+      "ge_1km": 46,
+      "ge_3km": 46,
+      "ge_5km": 39,
+      "ge_10km": 38,
+      "ge_20km": 0,
+      "ge_40km": 0
+    },
+    {
+      "support_pct": 0.2,
+      "min_trips": 40,
+      "corridors": 46,
+      "below_mining_floor": true,
+      "max_length_km": 15.6,
+      "mean_length_km": 11.91,
+      "mean_cells": 32.9,
+      "ge_1km": 46,
+      "ge_3km": 46,
+      "ge_5km": 39,
+      "ge_10km": 38,
+      "ge_20km": 0,
+      "ge_40km": 0
+    },
+    {
+      "support_pct": 0.3,
+      "min_trips": 60,
+      "corridors": 46,
+      "below_mining_floor": false,
+      "max_length_km": 15.6,
+      "mean_length_km": 11.91,
+      "mean_cells": 32.9,
+      "ge_1km": 46,
+      "ge_3km": 46,
+      "ge_5km": 39,
+      "ge_10km": 38,
+      "ge_20km": 0,
+      "ge_40km": 0
+    },
+    {
+      "support_pct": 0.5,
+      "min_trips": 100,
+      "corridors": 33,
+      "below_mining_floor": false,
+      "max_length_km": 15.03,
+      "mean_length_km": 12.38,
+      "mean_cells": 34.6,
+      "ge_1km": 33,
+      "ge_3km": 33,
+      "ge_5km": 28,
+      "ge_10km": 28,
+      "ge_20km": 0,
+      "ge_40km": 0
+    },
+    {
+      "support_pct": 1.0,
+      "min_trips": 200,
+      "corridors": 25,
+      "below_mining_floor": false,
+      "max_length_km": 15.03,
+      "mean_length_km": 12.08,
+      "mean_cells": 34.1,
+      "ge_1km": 25,
+      "ge_3km": 25,
+      "ge_5km": 20,
+      "ge_10km": 20,
+      "ge_20km": 0,
+      "ge_40km": 0
+    }
+  ],
+  "length_ceiling": [
+    {
+      "min_length_km": 1.0,
+      "trips_at_least_this_long": 20000,
+      "max_possible_support_pct": 100.0
+    },
+    {
+      "min_length_km": 3.0,
+      "trips_at_least_this_long": 19686,
+      "max_possible_support_pct": 98.43
+    },
+    {
+      "min_length_km": 5.0,
+      "trips_at_least_this_long": 18125,
+      "max_possible_support_pct": 90.625
+    },
+    {
+      "min_length_km": 10.0,
+      "trips_at_least_this_long": 11313,
+      "max_possible_support_pct": 56.565
+    },
+    {
+      "min_length_km": 20.0,
+      "trips_at_least_this_long": 118,
+      "max_possible_support_pct": 0.59
+    },
+    {
+      "min_length_km": 40.0,
+      "trips_at_least_this_long": 0,
+      "max_possible_support_pct": 0.0
+    }
+  ],
+  "generated_utc": "2026-08-27T17:35:44.710939+00:00"
+}

@@ -1,0 +1,28 @@
+# Porto Taxi Trajectory Project
+# Python 3.9+ (Dataproc image 2.1 ships Python 3.10)
+#
+#   python -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+#
+# NOTE ON H3: this project uses the h3-py v4 API (latlng_to_cell, cell_to_latlng,
+# grid_disk, grid_path_cells).  The v3 API used different names entirely
+# (geo_to_h3, h3_to_geo, k_ring), so the major version below is not optional.
+
+pyspark>=3.3,<4.0
+h3>=4.1,<5.0
+numpy>=1.23
+
+# Visualisation / reporting
+folium>=0.14
+plotly>=5.15
+pandas>=1.5
+
+# Notebook demo (Colab Enterprise installs these itself)
+jupyter>=1.0
+ipywidgets>=8.0
+
+# Cloud
+google-cloud-storage>=2.10
+
+# Tests
+pytest>=7.0
