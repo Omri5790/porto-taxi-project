@@ -48,7 +48,13 @@ import time
 from .corridors import dedup_consecutive, is_valid
 
 PREFIX_CELLS = 2     # suffixes are bucketed by their first this-many cells
-MAX_SUFFIX = 40      # suffixes truncated here; caps per-bucket memory
+# Suffixes are truncated here, which caps per-bucket memory.  40 cells is ~14 km
+# at res 9, so it put a ceiling on this method well below the 20 km
+# configuration the brief asks for.  Raising it is nearly free: the mean trip is
+# 16.9 cells and the 99th percentile is 57, so the truncation only ever touched
+# the longest ~1% of trips -- which are precisely the only ones that could
+# contain a 20 km corridor in the first place.
+MAX_SUFFIX = 70      # ~25 km at res 9
 MIN_REPEAT = 5       # shortest repeat worth reporting
 MAX_BUCKET = 200_000  # guard against one pathological bucket eating an executor
 MAX_RESULTS = 6000

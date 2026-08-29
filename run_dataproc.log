@@ -1,0 +1,451 @@
+==============================================================
+  Porto pipeline on Dataproc
+  project : project-bf990986-f458-4b39-926          region: europe-west1
+  cluster : porto-pipeline  (1 master + 5 workers x e2-standard-2)
+  stages  : 123
+  results : gs://porto-taxi-project-bf990986/results/20260829T123429Z
+==============================================================
+
+[1/5] packaging code...
+Copying file:///var/folders/0k/jwsfmt5d0x79q9q8jv0fqmzm0000gn/T/tmp.xsSOYtD6Hi/code.zip to gs://porto-taxi-project-bf990986/code/code-20260829T123429Z.zip
+  
+........
+Copying file://scripts/stage1_data_preparation.py to gs://porto-taxi-project-bf990986/code/20260829T123429Z-stage1_data_preparation.py
+  
+.......
+Copying file://scripts/stage2_spatial_encoding.py to gs://porto-taxi-project-bf990986/code/20260829T123429Z-stage2_spatial_encoding.py
+  
+.......
+Copying file://scripts/stage3/run_stage3.py to gs://porto-taxi-project-bf990986/code/20260829T123429Z-run_stage3.py
+  
+.......
+      uploaded
+
+[2/5] cluster...
+Waiting on operation [projects/project-bf990986-f458-4b39-926/regions/europe-west1/operations/6a5a6e2d-150d-3e5f-a285-31ae31c9a59b].
+Waiting for cluster creation operation...
+WARNING: Consider using Auto Zone rather than selecting a zone manually. See https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/auto-zone
+WARNING: Failed to validate permissions required for default service account: '212659012096-compute@developer.gserviceaccount.com'. Cluster creation could still be successful if required permissions have been granted to the respective service accounts as mentioned in the document https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/service-accounts#dataproc_service_accounts_2. This could be due to Cloud Resource Manager API hasn't been enabled in your project '212659012096' before or it is disabled. Enable it by visiting 'https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/overview?project=212659012096'.
+WARNING: For PD-Standard without local SSDs, we strongly recommend provisioning 1TB or larger to ensure consistently high I/O performance. See https://cloud.google.com/compute/docs/disks/performance for information on disk I/O performance.
+WARNING: The firewall rules for specified network or subnetwork would allow ingress traffic from 0.0.0.0/0, which could be a security risk.
+.......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................done.
+Created [https://dataproc.googleapis.com/v1/projects/project-bf990986-f458-4b39-926/regions/europe-west1/clusters/porto-pipeline] Cluster placed in zone [europe-west1-c].
+      created (6 nodes)
+
+[3/5] running stages...
+
+      submitting stage1...
+Job [stage1-20260829T123429Z] submitted.
+Waiting for job output...
+╔══════════════════════════════════════════════════════════════╗
+║  Porto Taxi Project – Stage 1: High-Performance PySpark      ║
+║  Mode: gcs         Full Dataset: True                   ║
+║  Time: 2026-08-29 12:39:48                       ║
+╚══════════════════════════════════════════════════════════════╝
+26/08/29 12:39:51 INFO SparkEnv: Registering MapOutputTracker
+26/08/29 12:39:52 INFO SparkEnv: Registering BlockManagerMaster
+26/08/29 12:39:52 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+26/08/29 12:39:52 INFO SparkEnv: Registering OutputCommitCoordinator
+26/08/29 12:39:56 INFO DataprocSparkPlugin: Registered 128 driver metrics
+26/08/29 12:39:59 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.41:8032
+26/08/29 12:40:00 INFO AHSProxy: Connecting to Application History server at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.41:10200
+26/08/29 12:40:04 INFO Configuration: resource-types.xml not found
+26/08/29 12:40:04 INFO ResourceUtils: Unable to find 'resource-types.xml'.
+26/08/29 12:40:09 INFO YarnClientImpl: Submitted application application_1788007059475_0001
+26/08/29 12:40:11 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.41:8030
+26/08/29 12:40:14 INFO GhfsStorageStatistics: Detected potential high latency for operation op_get_file_status. latencyMs=1050; previousMaxLatencyMs=0; operationCount=1; context=gs://dataproc-temp-europe-west1-212659012096-77fhpvt8/48810756-f40d-4521-b5ac-a03e71b4bf59/spark-job-history
+26/08/29 12:40:15 INFO GoogleCloudStorageImpl: Ignoring exception of type GoogleJsonResponseException; verified object already exists with desired state.
+
+STEP 1: Loading raw dataset from gs://porto-taxi-project-bf990986/raw/train.csv...
+
+STEP 2: Processing 1.71M trips in PySpark mapPartitions across CPU cores...
+  ✓ Stage 1 Cleaning completed! Valid clean trips: 1,602,542
+
+  Per-rule breakdown:
+    rule                                                               trips    share
+    1. MISSING_DATA flag set by the telemetry                             10   0.001%
+    2. empty POLYLINE (booking cancelled immediately)                  5,901   0.345%
+    2b. POLYLINE not valid JSON                                            0   0.000%
+    3. fewer than 2 GPS points                                        30,607   1.789%
+    4. duration over 24 hours (meter left running)                         0   0.000%
+    5. a GPS point outside the Porto bounding box                     16,716   0.977%
+    6. jump implying over 200 km/h (satellite error)                  36,483   2.133%
+    7. under 2 distinct points after deduplication                       203   0.012%
+    8. shorter than 0.2 km (not a journey)                            18,201   1.064%
+    9. longer than 100.0 km (implausible for this city)                    7   0.000%
+    ---------------------------------------------------------------------------------
+    removed                                                          108,128   6.321%
+    kept                                                           1,602,542  93.679%
+
+STEP 3: Generating Statistics...
+  Overview: 1,602,542 trips, 440 unique taxis
++-------+-----------------+------------------+-----------------+-----------------+------------------+
+|summary|       num_points|    num_points_raw|     duration_sec|      distance_km|     avg_speed_kmh|
++-------+-----------------+------------------+-----------------+-----------------+------------------+
+|  count|          1602542|           1602542|          1602542|          1602542|           1602542|
+|   mean|48.17969513435529| 48.83701456810493|717.5552185215738|5.233334672851247|26.714465736311887|
+| stddev|35.13609643971085|36.797578874247414| 551.963683113709|4.209173385508143| 12.74201354869158|
+|    min|                2|                 2|               15|              0.2|              0.13|
+|    max|             3585|              3836|            57525|          99.2204|            197.08|
++-------+-----------------+------------------+-----------------+-----------------+------------------+
+
+  Distance percentiles (km):
+      p1:    0.671 km
+     p25:    2.477 km
+     p50:    3.981 km
+     p75:    6.482 km
+     p90:   10.748 km
+     p95:   13.840 km
+     p99:   19.872 km
+
+STEP 4: Saving Parquet to gs://porto-taxi-project-bf990986/data/cleaned_trips.parquet...
+  ✓ Saved Parquet successfully!
+  ✓ Cleaning report saved to gs://porto-taxi-project-bf990986/results/20260829T123429Z/cleaning_report.json
+
+======================================================================
+  ✅ Stage 1 completed successfully in 707.0 seconds (11.78 minutes)
+======================================================================
+Job [stage1-20260829T123429Z] finished successfully.
+done: true
+driverControlFilesUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/48810756-f40d-4521-b5ac-a03e71b4bf59/jobs/stage1-20260829T123429Z/
+driverOutputResourceUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/48810756-f40d-4521-b5ac-a03e71b4bf59/jobs/stage1-20260829T123429Z/driveroutput
+jobUuid: 86799d10-af74-3662-89a7-7bc93520fb12
+placement:
+  clusterName: porto-pipeline
+  clusterUuid: 48810756-f40d-4521-b5ac-a03e71b4bf59
+pysparkJob:
+  args:
+  - --mode=gcs
+  - --input_path=gs://porto-taxi-project-bf990986/raw/train.csv
+  - --output_path=gs://porto-taxi-project-bf990986/data/cleaned_trips.parquet
+  - --report_path=gs://porto-taxi-project-bf990986/results/20260829T123429Z/cleaning_report.json
+  mainPythonFileUri: gs://porto-taxi-project-bf990986/code/20260829T123429Z-stage1_data_preparation.py
+  pythonFileUris:
+  - gs://porto-taxi-project-bf990986/code/code-20260829T123429Z.zip
+reference:
+  jobId: stage1-20260829T123429Z
+  projectId: project-bf990986-f458-4b39-926
+status:
+  state: DONE
+  stateStartTime: '2026-08-29T12:51:39.167034Z'
+statusHistory:
+- state: PENDING
+  stateStartTime: '2026-08-29T12:39:30.895911Z'
+- state: SETUP_DONE
+  stateStartTime: '2026-08-29T12:39:31.036563Z'
+- details: Agent reported job success
+  state: RUNNING
+  stateStartTime: '2026-08-29T12:39:31.822420Z'
+yarnApplications:
+- memoryMbSeconds: '2486337'
+  name: PortoTaxi_Stage1_PySparkEngine
+  progress: 1.0
+  state: FINISHED
+  trackingUrl: http://porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal.:8088/proxy/application_1788007059475_0001/
+  vcoreSeconds: '758'
+      stage1 finished in 737s
+
+      submitting stage2...
+Job [stage2-20260829T123429Z] submitted.
+Waiting for job output...
+╔══════════════════════════════════════════════════════════════╗
+║  Porto Taxi Project – Stage 2: H3 Spatial Encoding Engine    ║
+║  Resolutions: Res 8 (~0.73km²), Res 9 (~0.10km²), Res 10 (~0.015km²)║
+║  Mode: gcs         Full Dataset: True                   ║
+║  Time: 2026-08-29 12:52:10                       ║
+╚══════════════════════════════════════════════════════════════╝
+26/08/29 12:52:12 INFO SparkEnv: Registering MapOutputTracker
+26/08/29 12:52:12 INFO SparkEnv: Registering BlockManagerMaster
+26/08/29 12:52:12 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+26/08/29 12:52:13 INFO SparkEnv: Registering OutputCommitCoordinator
+26/08/29 12:52:15 INFO DataprocSparkPlugin: Registered 128 driver metrics
+26/08/29 12:52:16 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.41:8032
+26/08/29 12:52:17 INFO AHSProxy: Connecting to Application History server at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.41:10200
+26/08/29 12:52:18 INFO Configuration: resource-types.xml not found
+26/08/29 12:52:18 INFO ResourceUtils: Unable to find 'resource-types.xml'.
+26/08/29 12:52:19 INFO YarnClientImpl: Submitted application application_1788007059475_0002
+26/08/29 12:52:21 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.41:8030
+26/08/29 12:52:23 INFO GhfsStorageStatistics: Detected potential high latency for operation op_get_file_status. latencyMs=904; previousMaxLatencyMs=0; operationCount=1; context=gs://dataproc-temp-europe-west1-212659012096-77fhpvt8/48810756-f40d-4521-b5ac-a03e71b4bf59/spark-job-history
+26/08/29 12:52:23 INFO GoogleCloudStorageImpl: Ignoring exception of type GoogleJsonResponseException; verified object already exists with desired state.
+
+STEP 1: Reading cleaned trips dataset from gs://porto-taxi-project-bf990986/data/cleaned_trips.parquet...
+  ✓ Loaded 1,602,542 cleaned trips for H3 spatial encoding.
+
+STEP 2: Encoding trajectories into H3 Res 8, Res 9 & Res 10 in PySpark mapPartitions...
+
+STEP 3: Saving H3-encoded Parquet directly to gs://porto-taxi-project-bf990986/data/h3_encoded_trips.parquet...
+26/08/29 12:52:50 WARN package: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+  ✓ Saved H3 Parquet dataset successfully!
+
+STEP 4: Computing H3 Grid Analytics on saved Parquet...
+  • Total Clean Trips H3-Encoded: 1,602,542
+  • Unique H3 Res 8 Cells Covered in Porto: 531 cells (~0.73 km² each)
+  • Unique H3 Res 9 Cells Covered in Porto: 3,151 cells (~0.10 km² each)
+  • Unique H3 Res 10 Cells Covered in Porto: 16,210 cells (~0.015 km² / 66m edge)
++-------+------------------+-----------------+------------------+
+|summary|    h3_res8_length|   h3_res9_length|   h3_res10_length|
++-------+------------------+-----------------+------------------+
+|  count|           1602542|          1602542|           1602542|
+|   mean|7.6545937641571955|16.91326280372059| 29.26083684546177|
+| stddev| 5.404886576923791| 11.7309453906125|17.442506256871685|
+|    min|                 1|                1|                 1|
+|    max|               129|              274|               574|
++-------+------------------+-----------------+------------------+
+
+  ✓ H3 Encoding report saved to gs://porto-taxi-project-bf990986/results/20260829T123429Z/h3_encoding_report.json
+
+======================================================================
+  ✅ Stage 2 H3 Spatial Encoding completed in 349.3 seconds (5.82 minutes)
+======================================================================
+Job [stage2-20260829T123429Z] finished successfully.
+done: true
+driverControlFilesUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/48810756-f40d-4521-b5ac-a03e71b4bf59/jobs/stage2-20260829T123429Z/
+driverOutputResourceUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/48810756-f40d-4521-b5ac-a03e71b4bf59/jobs/stage2-20260829T123429Z/driveroutput
+jobUuid: e0fa1b5e-678c-3aeb-9019-ff41dcc4401c
+placement:
+  clusterName: porto-pipeline
+  clusterUuid: 48810756-f40d-4521-b5ac-a03e71b4bf59
+pysparkJob:
+  args:
+  - --mode=gcs
+  - --input_path=gs://porto-taxi-project-bf990986/data/cleaned_trips.parquet
+  - --output_path=gs://porto-taxi-project-bf990986/data/h3_encoded_trips.parquet
+  - --report_path=gs://porto-taxi-project-bf990986/results/20260829T123429Z/h3_encoding_report.json
+  mainPythonFileUri: gs://porto-taxi-project-bf990986/code/20260829T123429Z-stage2_spatial_encoding.py
+  pythonFileUris:
+  - gs://porto-taxi-project-bf990986/code/code-20260829T123429Z.zip
+reference:
+  jobId: stage2-20260829T123429Z
+  projectId: project-bf990986-f458-4b39-926
+status:
+  state: DONE
+  stateStartTime: '2026-08-29T12:58:04.538086Z'
+statusHistory:
+- state: PENDING
+  stateStartTime: '2026-08-29T12:51:47.569176Z'
+- state: SETUP_DONE
+  stateStartTime: '2026-08-29T12:51:47.672858Z'
+- details: Agent reported job success
+  state: RUNNING
+  stateStartTime: '2026-08-29T12:51:48.114609Z'
+yarnApplications:
+- memoryMbSeconds: '9066072'
+  name: PortoTaxi_Stage2_H3SpatialEncoding
+  progress: 1.0
+  state: FINISHED
+  trackingUrl: http://porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal.:8088/proxy/application_1788007059475_0002/
+  vcoreSeconds: '2761'
+      stage2 finished in 382s
+
+      submitting stage3...
+Job [stage3-20260829T123429Z] submitted.
+Waiting for job output...
+26/08/29 12:58:25 INFO SparkEnv: Registering MapOutputTracker
+26/08/29 12:58:25 INFO SparkEnv: Registering BlockManagerMaster
+26/08/29 12:58:25 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+26/08/29 12:58:25 INFO SparkEnv: Registering OutputCommitCoordinator
+26/08/29 12:58:27 INFO DataprocSparkPlugin: Registered 128 driver metrics
+26/08/29 12:58:28 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.41:8032
+26/08/29 12:58:28 INFO AHSProxy: Connecting to Application History server at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.41:10200
+26/08/29 12:58:29 INFO Configuration: resource-types.xml not found
+26/08/29 12:58:29 INFO ResourceUtils: Unable to find 'resource-types.xml'.
+26/08/29 12:58:31 INFO YarnClientImpl: Submitted application application_1788007059475_0003
+26/08/29 12:58:32 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.41:8030
+26/08/29 12:58:34 INFO GhfsStorageStatistics: Detected potential high latency for operation op_get_file_status. latencyMs=667; previousMaxLatencyMs=0; operationCount=1; context=gs://dataproc-temp-europe-west1-212659012096-77fhpvt8/48810756-f40d-4521-b5ac-a03e71b4bf59/spark-job-history
+26/08/29 12:58:34 INFO GoogleCloudStorageImpl: Ignoring exception of type GoogleJsonResponseException; verified object already exists with desired state.
+==========================================================================
+  Stage 3 - Popular Long Sub-Route Discovery
+  input   : gs://porto-taxi-project-bf990986/data/h3_encoded_trips.parquet
+  output  : gs://porto-taxi-project-bf990986/results/20260829T123429Z
+  support : 0.05% (mining floor; sweep derived from it)
+==========================================================================
+
+Loaded 1,602,542 trips (cells from h3_res9).
+Mining floor: 802 trips = 0.05%
+
+Upper bound on support, from the trip-length distribution alone:
+  a corridor of >=    1 km can be supported by at most 1,560,203 trips (97.3580%)
+  a corridor of >=    3 km can be supported by at most 1,047,535 trips (65.3671%)
+  a corridor of >=    5 km can be supported by at most   593,371 trips (37.0269%)
+  a corridor of >=   10 km can be supported by at most   187,002 trips (11.6691%)
+  a corridor of >=   20 km can be supported by at most    15,693 trips (0.9793%)
+  a corridor of >=   40 km can be supported by at most       460 trips (0.0287%)
+
+[gate] Count-Min pre-filter + Bloom over frequent 4-grams
+  streamed 22,273,314 n-grams, 99.9817% pruned before the shuffle, 4,069 frequent
+
+[A] MinHash + LSH clustering
+  2,370 cluster representatives in 506.3s
+
+[B] Distributed generalised suffix array + LCP
+  5,292 repeats in 173.8s (17.06% of suffixes pruned by the Bloom gate)
+
+[C] Count-Min pruned level-wise growth (support verified each round)
+    round  1: frontier   560 ->   253 (from  16862 verified extensions), maximal     0
+    round  2: frontier   253 ->   251 (from   6284 verified extensions), maximal     1
+    round  3: frontier   251 ->   243 (from   4740 verified extensions), maximal     9
+    round  4: frontier   243 ->   226 (from   3700 verified extensions), maximal    24
+    round  5: frontier   226 ->   138 (from   2844 verified extensions), maximal    45
+    round  6: frontier   138 ->   120 (from   1414 verified extensions), maximal    61
+    round  7: frontier   120 ->   105 (from   1066 verified extensions), maximal    76
+    round  8: frontier   105 ->    81 (from    760 verified extensions), maximal   100
+    round  9: frontier    81 ->    51 (from    527 verified extensions), maximal   121
+    round 10: frontier    51 ->    41 (from    270 verified extensions), maximal   131
+    round 11: frontier    41 ->    28 (from    169 verified extensions), maximal   144
+    round 12: frontier    28 ->    17 (from    113 verified extensions), maximal   155
+    round 13: frontier    17 ->    10 (from     90 verified extensions), maximal   161
+    round 14: frontier    10 ->     8 (from     46 verified extensions), maximal   163
+    round 15: frontier     8 ->     4 (from     25 verified extensions), maximal   167
+    round 16: frontier     4 ->     2 (from     13 verified extensions), maximal   169
+    round 17: frontier     2 ->     2 (from      8 verified extensions), maximal   169
+    round 18: frontier     2 ->     1 (from      5 verified extensions), maximal   170
+    round 19: frontier     1 ->     1 (from      3 verified extensions), maximal   170
+    round 20: frontier     1 ->     1 (from      1 verified extensions), maximal   170
+    round 21: frontier     1 ->     0 (from      0 verified extensions), maximal   171
+  171 maximal corridors in 1389.3s
+
+[merge] 7,833 raw candidates from all methods
+  7,809 pass the simple-path, tortuosity and min-8-cell gates
+  1,479 kept for verification (<= 666 per method)
+
+[verify] exact support over 100% of trips
+  1,479 corridors verified in 18.3s
+
+  per-method (verified):
+    cms_growth             147 corridors, max  15.02 km, mean  5.53 km, support overstated by 0.0%
+    lsh_clustering         435 corridors, max   4.92 km, mean  4.08 km, support overstated by 123.89%
+    suffix_array_lcp       666 corridors, max   9.46 km, mean  6.14 km, support overstated by 0.0%
+
+  1,248 verified -> 461 after removing contained corridors
+  >=    1 km :  461 corridors (at X = 0.05%)
+  >=    3 km :  446 corridors (at X = 0.05%)
+  >=    5 km :  194 corridors (at X = 0.05%)
+  >=   10 km :   14 corridors (at X = 0.05%)   [below target]
+  >=   20 km :    0 corridors (at X = 0.05%)   [below target]
+  >=   40 km :    0 corridors (at X = 0.05%)   [below target]
+
+[anomalies] Bloom transition novelty + HyperLogLog taxi diversity
+26/08/29 13:40:17 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_8_3 !
+26/08/29 13:40:17 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_8_1 !
+26/08/29 13:40:17 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_10_1 !
+26/08/29 13:40:17 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_10_3 !
+26/08/29 13:40:19 WARN YarnAllocator: Container from a bad node: container_1788007059475_0003_01_000002 on host: porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:40:18.545]Container killed on request. Exit code is 143
+[2026-08-29 13:40:18.547]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:40:18.548]Killed by external signal
+.
+26/08/29 13:40:19 WARN YarnSchedulerBackend$YarnSchedulerEndpoint: Requesting driver to remove executor 2 for reason Container from a bad node: container_1788007059475_0003_01_000002 on host: porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:40:18.545]Container killed on request. Exit code is 143
+[2026-08-29 13:40:18.547]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:40:18.548]Killed by external signal
+.
+26/08/29 13:40:19 ERROR YarnScheduler: Lost executor 2 on porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal: Container from a bad node: container_1788007059475_0003_01_000002 on host: porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:40:18.545]Container killed on request. Exit code is 143
+[2026-08-29 13:40:18.547]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:40:18.548]Killed by external signal
+.
+26/08/29 13:40:19 WARN TaskSetManager: Lost task 1.0 in stage 118.0 (TID 980) (porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal executor 2): ExecutorLostFailure (executor 2 exited caused by one of the running tasks) Reason: Container from a bad node: container_1788007059475_0003_01_000002 on host: porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:40:18.545]Container killed on request. Exit code is 143
+[2026-08-29 13:40:18.547]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:40:18.548]Killed by external signal
+.
+26/08/29 13:40:21 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_10_6 !
+26/08/29 13:40:21 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_10_0 !
+26/08/29 13:40:21 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_8_0 !
+26/08/29 13:40:21 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_8_6 !
+26/08/29 13:40:22 WARN YarnAllocator: Container from a bad node: container_1788007059475_0003_01_000001 on host: porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:40:22.280]Container killed on request. Exit code is 143
+[2026-08-29 13:40:22.280]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:40:22.281]Killed by external signal
+.
+26/08/29 13:40:22 WARN YarnSchedulerBackend$YarnSchedulerEndpoint: Requesting driver to remove executor 1 for reason Container from a bad node: container_1788007059475_0003_01_000001 on host: porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:40:22.280]Container killed on request. Exit code is 143
+[2026-08-29 13:40:22.280]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:40:22.281]Killed by external signal
+.
+26/08/29 13:40:22 ERROR YarnScheduler: Lost executor 1 on porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal: Container from a bad node: container_1788007059475_0003_01_000001 on host: porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:40:22.280]Container killed on request. Exit code is 143
+[2026-08-29 13:40:22.280]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:40:22.281]Killed by external signal
+.
+26/08/29 13:40:22 WARN TaskSetManager: Lost task 0.0 in stage 118.0 (TID 982) (porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal executor 1): ExecutorLostFailure (executor 1 exited caused by one of the running tasks) Reason: Container from a bad node: container_1788007059475_0003_01_000001 on host: porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:40:22.280]Container killed on request. Exit code is 143
+[2026-08-29 13:40:22.280]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:40:22.281]Killed by external signal
+.
+26/08/29 13:43:10 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_8_4 !
+26/08/29 13:43:10 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_10_4 !
+26/08/29 13:43:11 WARN YarnAllocator: Container from a bad node: container_1788007059475_0003_01_000006 on host: porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:43:11.163]Container killed on request. Exit code is 143
+[2026-08-29 13:43:11.164]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:43:11.169]Killed by external signal
+.
+26/08/29 13:43:11 WARN YarnSchedulerBackend$YarnSchedulerEndpoint: Requesting driver to remove executor 6 for reason Container from a bad node: container_1788007059475_0003_01_000006 on host: porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:43:11.163]Container killed on request. Exit code is 143
+[2026-08-29 13:43:11.164]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:43:11.169]Killed by external signal
+.
+26/08/29 13:43:11 ERROR YarnScheduler: Lost executor 6 on porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal: Container from a bad node: container_1788007059475_0003_01_000006 on host: porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:43:11.163]Container killed on request. Exit code is 143
+[2026-08-29 13:43:11.164]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:43:11.169]Killed by external signal
+.
+26/08/29 13:43:11 WARN TaskSetManager: Lost task 3.0 in stage 119.0 (TID 992) (porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal executor 6): ExecutorLostFailure (executor 6 exited caused by one of the running tasks) Reason: Container from a bad node: container_1788007059475_0003_01_000006 on host: porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 13:43:11.163]Container killed on request. Exit code is 143
+[2026-08-29 13:43:11.164]Container exited with a non-zero exit code 143. 
+[2026-08-29 13:43:11.169]Killed by external signal
+.
+  scored 1,342,107 trips in 71.2s
+
+Wrote results to gs://porto-taxi-project-bf990986/results/20260829T123429Z
+Total runtime 2839.3s
+Job [stage3-20260829T123429Z] finished successfully.
+done: true
+driverControlFilesUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/48810756-f40d-4521-b5ac-a03e71b4bf59/jobs/stage3-20260829T123429Z/
+driverOutputResourceUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/48810756-f40d-4521-b5ac-a03e71b4bf59/jobs/stage3-20260829T123429Z/driveroutput
+jobUuid: 72db508d-5b59-326a-bd20-9b9fe839d67c
+placement:
+  clusterName: porto-pipeline
+  clusterUuid: 48810756-f40d-4521-b5ac-a03e71b4bf59
+pysparkJob:
+  args:
+  - --input_path=gs://porto-taxi-project-bf990986/data/h3_encoded_trips.parquet
+  - --output_dir=gs://porto-taxi-project-bf990986/results/20260829T123429Z
+  - --support_pct=0.05
+  mainPythonFileUri: gs://porto-taxi-project-bf990986/code/20260829T123429Z-run_stage3.py
+  pythonFileUris:
+  - gs://porto-taxi-project-bf990986/code/code-20260829T123429Z.zip
+reference:
+  jobId: stage3-20260829T123429Z
+  projectId: project-bf990986-f458-4b39-926
+status:
+  state: DONE
+  stateStartTime: '2026-08-29T13:45:46.858260Z'
+statusHistory:
+- state: PENDING
+  stateStartTime: '2026-08-29T12:58:09.865987Z'
+- state: SETUP_DONE
+  stateStartTime: '2026-08-29T12:58:09.926314Z'
+- details: Agent reported job success
+  state: RUNNING
+  stateStartTime: '2026-08-29T12:58:10.282734Z'
+yarnApplications:
+- memoryMbSeconds: '92055253'
+  name: Stage3_SubRouteDiscovery
+  progress: 1.0
+  state: FINISHED
+  trackingUrl: http://porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal.:8088/proxy/application_1788007059475_0003/
+  vcoreSeconds: '28086'
+      stage3 finished in 2865s
+
+[4/5] writing provenance...
+Copying file:///var/folders/0k/jwsfmt5d0x79q9q8jv0fqmzm0000gn/T/tmp.X4ZJzvT6Wk to gs://porto-taxi-project-bf990986/results/20260829T123429Z/run_provenance.json
+  
+......
+
+==============================================================
+  Pipeline finished in 3984s
+  Results: gs://porto-taxi-project-bf990986/results/20260829T123429Z
+
+  Pull them down and rebuild the notebook and deck:
+    gcloud storage cp -r gs://porto-taxi-project-bf990986/results/20260829T123429Z/* output/
+    python tools/validate_results.py output/stage3_subroutes.json
+    python tools/build_subroute_maps.py
+    python tools/build_stage3_notebook.py
+    node   tools/build_methods_deck.js
+==============================================================
+
+[5/5] deleting cluster...
+Waiting on operation [projects/project-bf990986-f458-4b39-926/regions/europe-west1/operations/1f948b2a-f6a8-32f0-8488-25f6970145eb].
+Waiting for cluster deletion operation...
+.......................................................................................................................................................done.
+Deleted [https://dataproc.googleapis.com/v1/projects/project-bf990986-f458-4b39-926/regions/europe-west1/clusters/porto-pipeline].
+      deleted

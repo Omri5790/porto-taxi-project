@@ -1,5 +1,5 @@
 """
-Measure what k costs and what it buys, so the choice of k=3 is evidence.
+Measure what k costs and what it buys, so the gate's k is evidence.
 
 k is *not* the length of the routes being mined -- those run to 40 cells.  k is
 the length of the fragment the gate counts, and therefore the seed the growth
@@ -24,6 +24,9 @@ import glob
 import os
 import sys
 
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -39,6 +42,11 @@ def main() -> int:
     except ImportError:
         print("needs pyarrow:  pip install pyarrow", file=sys.stderr)
         return 2
+
+    # Read the value the pipeline actually runs with, rather than repeating it
+    # here.  This file exists to justify that number; if it quoted its own copy
+    # the two could drift, which is exactly what happened once already.
+    from scripts.stage3.run_stage3 import DEFAULT_GATE_K
 
     shards = sorted(glob.glob(os.path.join(args.parquet, "*.parquet")))
     if not shards:
@@ -78,7 +86,7 @@ def main() -> int:
         distinct = len(counts)
         frequent = sum(1 for v in counts.values() if v >= support)
         pruned = 100.0 * (1 - frequent / distinct) if distinct else 0.0
-        mark = "   <- chosen" if k == 3 else ""
+        mark = "   <- chosen" if k == DEFAULT_GATE_K else ""
         print(f"  {k:>3}{distinct:>11,}{frequent:>10,}{pruned:>12.2f}%"
               f"{too_short:>11,} ({100.0*too_short/n_trips:4.2f}%){mark}")
 
@@ -94,12 +102,14 @@ def main() -> int:
     print("  contributes no fragment at all, so a corridor supported only by short")
     print("  trips becomes invisible to the gate.")
     print()
-    print("  k=3 is the shortest fragment that carries a turn: two steps, so A->B->C")
-    print("  distinguishes traffic that continued from traffic that turned.  k=2 has")
-    print("  one step and only a direction.  And because support is anti-monotone,")
-    print("  a gate at k=3 already prunes every longer sequence that contains an")
-    print("  infrequent 3-gram -- so the extra pruning a larger k buys is pruning")
-    print("  the pipeline does not need, at a cost it would rather not pay.")
+    print("  k must be at least 3 to carry a turn: two steps, so A->B->C tells")
+    print("  traffic that continued from traffic that turned, where k=2 has one")
+    print(f"  step and only a direction.  Among the usable lengths, k={DEFAULT_GATE_K} sits where")
+    print("  pruning has already reached ~90%, the frequent-fragment count is near")
+    print("  its maximum, and ~97% of trips are still long enough to contribute a")
+    print("  seed.  Past that the distinct count keeps climbing and the share of")
+    print("  trips that can seed anything falls away, for pruning that")
+    print("  anti-monotonicity has already made unnecessary.")
     print("=" * 78)
     return 0
 

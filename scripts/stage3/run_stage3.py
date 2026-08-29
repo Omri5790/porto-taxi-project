@@ -48,7 +48,12 @@ from scripts.stage3.io_utils import join, write_json
 DISTANCE_THRESHOLDS_KM = [1.0, 3.0, 5.0, 10.0, 20.0, 40.0]
 SUPPORT_SWEEP_PCT = [0.05, 0.10, 0.20, 0.30, 0.50, 1.00]
 TARGET_PER_THRESHOLD = 100
-MAX_VERIFY = 2000
+#: Candidates re-measured against every trip.  Verification is cheap -- the real
+#: run verified 1,479 corridors against 1.6M trips in 18.3 seconds -- and the
+#: cap is applied longest-first, so a low cap silently discards exactly the long
+#: corridors the brief asks for.  Raised once the cost was measured rather than
+#: guessed.
+MAX_VERIFY = 4000
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -197,6 +202,14 @@ def verify(sc, base_rdd, candidates, max_gap: int):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+#: Fragment length the gate counts, and therefore the seed length the growth
+#: method starts from.  Not the length of a route -- corridors run to 40 cells.
+#: tools/measure_k_choice.py reads this constant and measures what it costs and
+#: what it buys, so the number in the code and the number in the write-up cannot
+#: drift apart.
+DEFAULT_GATE_K = 4
+
+
 def main():
     ap = argparse.ArgumentParser(description="Stage 3 - popular long sub-route discovery")
     ap.add_argument("--input_path", default="output/h3_encoded_trips.parquet")
@@ -205,7 +218,7 @@ def main():
                     help="mining threshold, in percent of all trips (lowest of the sweep)")
     ap.add_argument("--sample", type=float, default=None,
                     help="fraction of trips, for smoke tests only")
-    ap.add_argument("--gate_k", type=int, default=4)
+    ap.add_argument("--gate_k", type=int, default=DEFAULT_GATE_K)
     ap.add_argument("--max_gap", type=int, default=DEFAULT_MAX_GAP)
     ap.add_argument("--max_tortuosity", type=float, default=MAX_TORTUOSITY)
     ap.add_argument("--min_cells", type=int, default=8,
@@ -369,8 +382,17 @@ def main():
         r["rank"] = i + 1
 
     # ── the X% sweep and the distance thresholds ─────────────────────────────
+    # The sweep must include the threshold this run actually mined at.  Mining
+    # at 0.01% and then sweeping a fixed list that starts at 0.05% reports every
+    # corridor found below 0.05% as if it did not exist -- the run would do the
+    # work and then hide it.  Nothing below the mining floor is trustworthy
+    # (those corridors were never generated), so the floor is where the sweep
+    # starts, whatever it is.
+    sweep_pcts = sorted(set(SUPPORT_SWEEP_PCT + [args.support_pct]))
+    sweep_pcts = [p for p in sweep_pcts if p >= args.support_pct]
+
     sweep = []
-    for pct in SUPPORT_SWEEP_PCT:
+    for pct in sweep_pcts:
         need = max(1, int(math.ceil(total_trips * pct / 100.0)))
         subset = [r for r in records if r["trip_support"] >= need]
         row = {"support_pct": pct, "min_trips": need, "corridors": len(subset),
@@ -388,7 +410,7 @@ def main():
     by_threshold = {}
     for d in DISTANCE_THRESHOLDS_KM:
         chosen = None
-        for pct in sorted(SUPPORT_SWEEP_PCT, reverse=True):
+        for pct in sorted(sweep_pcts, reverse=True):
             need = max(1, int(math.ceil(total_trips * pct / 100.0)))
             subset = [r for r in records
                       if r["length_km"] >= d and r["trip_support"] >= need]

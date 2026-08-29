@@ -14,7 +14,7 @@
         "additive_error_pct_of_support": 3.013
       },
       "cms_memory_mb": 32.0,
-      "cms_build_sec": 6.4,
+      "cms_build_sec": 4.52,
       "candidates_after_cms": 386,
       "exact_frequent": 386,
       "pruned_before_shuffle_pct": 99.9308,
@@ -23,7 +23,7 @@
       "bloom_hashes": 7,
       "bloom_memory_kb": 0.5,
       "bloom_observed_fp_rate": 0.01013,
-      "runtime_sec": 13.69
+      "runtime_sec": 10.17
     },
     "method_a_lsh_clustering": {
       "algorithm": "MinHash + LSH clustering of trajectory segments",
@@ -40,7 +40,7 @@
       "buckets_above_support": 786,
       "representatives": 200,
       "min_support_trips": 60,
-      "runtime_sec": 36.91,
+      "runtime_sec": 25.8,
       "distributed": true
     },
     "method_b_suffix_array": {
@@ -49,15 +49,15 @@
         "Bloom filter over frequent 4-grams (0.5 KB, p~0.0101) used as an anti-monotone prefix gate before the shuffle"
       ],
       "prefix_bucket_cells": 2,
-      "max_suffix_cells": 40,
+      "max_suffix_cells": 70,
       "min_repeat_cells": 5,
       "suffix_positions_considered": 538369,
       "suffixes_emitted": 285384,
       "bloom_pruned_pct": 46.991,
-      "distinct_repeats_found": 3863,
-      "candidates": 3863,
+      "distinct_repeats_found": 3950,
+      "candidates": 3950,
       "min_support_trips": 60,
-      "runtime_sec": 8.23,
+      "runtime_sec": 5.46,
       "distributed": true,
       "exact_within_scope": true
     },
@@ -396,7 +396,7 @@
           "maximal_so_far": 144
         }
       ],
-      "runtime_sec": 186.36,
+      "runtime_sec": 128.64,
       "distributed": true
     },
     "per_method_scorecard": {
@@ -435,19 +435,19 @@
         "ge_40km": 0
       },
       "suffix_array_lcp": {
-        "corridors_verified": 666,
-        "max_length_km": 14.22,
-        "mean_length_km": 11.45,
-        "mean_cells": 32.5,
-        "max_support": 1412,
-        "mean_support": 525,
+        "corridors_verified": 1333,
+        "max_length_km": 17.32,
+        "mean_length_km": 10.41,
+        "mean_cells": 29.7,
+        "max_support": 1754,
+        "mean_support": 585,
         "with_holes": 0,
         "mean_tortuosity": 1.28,
         "support_overestimate_pct": 0.0,
-        "ge_1km": 666,
-        "ge_3km": 666,
-        "ge_5km": 666,
-        "ge_10km": 576,
+        "ge_1km": 1333,
+        "ge_3km": 1333,
+        "ge_5km": 1333,
+        "ge_10km": 663,
         "ge_20km": 0,
         "ge_40km": 0
       }
@@ -461,7 +461,7 @@
       "trips_scored": 19973,
       "min_trip_cells": 8,
       "top_n": 100,
-      "runtime_sec": 4.91,
+      "runtime_sec": 3.29,
       "distributed": true,
       "transition_gate": {
         "k": 2,
@@ -477,7 +477,7 @@
           "additive_error_pct_of_support": 9.346
         },
         "cms_memory_mb": 32.0,
-        "cms_build_sec": 4.2,
+        "cms_build_sec": 2.83,
         "candidates_after_cms": 2266,
         "exact_frequent": 2266,
         "pruned_before_shuffle_pct": 99.6071,
@@ -486,35 +486,35 @@
         "bloom_hashes": 7,
         "bloom_memory_kb": 2.7,
         "bloom_observed_fp_rate": 0.01026,
-        "runtime_sec": 11.16
+        "runtime_sec": 7.47
       }
     }
   },
   "pipeline": {
     "total_trips": 20000,
-    "candidates_verified": 893,
-    "corridors_reported": 46,
-    "verification_sec": 2.28,
-    "total_runtime_sec": 275.07
+    "candidates_verified": 1560,
+    "corridors_reported": 26,
+    "verification_sec": 3.0,
+    "total_runtime_sec": 193.84
   },
   "thresholds": {
     "1": {
-      "found": 46,
+      "found": 26,
       "support_pct_used": 0.3,
       "met_target": false
     },
     "3": {
-      "found": 46,
+      "found": 26,
       "support_pct_used": 0.3,
       "met_target": false
     },
     "5": {
-      "found": 39,
+      "found": 20,
       "support_pct_used": 0.3,
       "met_target": false
     },
     "10": {
-      "found": 38,
+      "found": 18,
       "support_pct_used": 0.3,
       "met_target": false
     },
@@ -531,92 +531,47 @@
   },
   "support_sweep": [
     {
-      "support_pct": 0.05,
-      "min_trips": 10,
-      "corridors": 46,
-      "below_mining_floor": true,
-      "max_length_km": 15.6,
-      "mean_length_km": 11.91,
-      "mean_cells": 32.9,
-      "ge_1km": 46,
-      "ge_3km": 46,
-      "ge_5km": 39,
-      "ge_10km": 38,
-      "ge_20km": 0,
-      "ge_40km": 0
-    },
-    {
-      "support_pct": 0.1,
-      "min_trips": 20,
-      "corridors": 46,
-      "below_mining_floor": true,
-      "max_length_km": 15.6,
-      "mean_length_km": 11.91,
-      "mean_cells": 32.9,
-      "ge_1km": 46,
-      "ge_3km": 46,
-      "ge_5km": 39,
-      "ge_10km": 38,
-      "ge_20km": 0,
-      "ge_40km": 0
-    },
-    {
-      "support_pct": 0.2,
-      "min_trips": 40,
-      "corridors": 46,
-      "below_mining_floor": true,
-      "max_length_km": 15.6,
-      "mean_length_km": 11.91,
-      "mean_cells": 32.9,
-      "ge_1km": 46,
-      "ge_3km": 46,
-      "ge_5km": 39,
-      "ge_10km": 38,
-      "ge_20km": 0,
-      "ge_40km": 0
-    },
-    {
       "support_pct": 0.3,
       "min_trips": 60,
-      "corridors": 46,
+      "corridors": 26,
       "below_mining_floor": false,
-      "max_length_km": 15.6,
-      "mean_length_km": 11.91,
-      "mean_cells": 32.9,
-      "ge_1km": 46,
-      "ge_3km": 46,
-      "ge_5km": 39,
-      "ge_10km": 38,
+      "max_length_km": 17.32,
+      "mean_length_km": 10.71,
+      "mean_cells": 28.9,
+      "ge_1km": 26,
+      "ge_3km": 26,
+      "ge_5km": 20,
+      "ge_10km": 18,
       "ge_20km": 0,
       "ge_40km": 0
     },
     {
       "support_pct": 0.5,
       "min_trips": 100,
-      "corridors": 33,
+      "corridors": 10,
       "below_mining_floor": false,
-      "max_length_km": 15.03,
-      "mean_length_km": 12.38,
-      "mean_cells": 34.6,
-      "ge_1km": 33,
-      "ge_3km": 33,
-      "ge_5km": 28,
-      "ge_10km": 28,
+      "max_length_km": 17.32,
+      "mean_length_km": 8.63,
+      "mean_cells": 23.0,
+      "ge_1km": 10,
+      "ge_3km": 10,
+      "ge_5km": 5,
+      "ge_10km": 5,
       "ge_20km": 0,
       "ge_40km": 0
     },
     {
       "support_pct": 1.0,
       "min_trips": 200,
-      "corridors": 25,
+      "corridors": 7,
       "below_mining_floor": false,
       "max_length_km": 15.03,
-      "mean_length_km": 12.08,
-      "mean_cells": 34.1,
-      "ge_1km": 25,
-      "ge_3km": 25,
-      "ge_5km": 20,
-      "ge_10km": 20,
+      "mean_length_km": 6.78,
+      "mean_cells": 19.0,
+      "ge_1km": 7,
+      "ge_3km": 7,
+      "ge_5km": 2,
+      "ge_10km": 2,
       "ge_20km": 0,
       "ge_40km": 0
     }
@@ -653,5 +608,5 @@
       "max_possible_support_pct": 0.0
     }
   ],
-  "generated_utc": "2026-08-29T12:27:49.654222+00:00"
+  "generated_utc": "2026-08-29T14:06:10.825117+00:00"
 }
