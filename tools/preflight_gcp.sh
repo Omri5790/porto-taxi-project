@@ -79,13 +79,23 @@ fi
 # ── 3. quota ──────────────────────────────────────────────────────────────────
 hr
 echo "CPU quota in $REGION:"
-# --flatten turns the quotas array into one record each; without it the format
-# expression below silently prints the field NAMES instead of their values.
-gcloud compute regions describe "$REGION" \
-  --flatten="quotas[]" \
-  --filter="quotas.metric=CPUS OR quotas.metric=PREEMPTIBLE_CPUS" \
-  --format="value[separator='  '](quotas.metric, quotas.usage, quotas.limit)" 2>/dev/null \
-  | awk '{printf "  %-18s %s used of %s free\n", $1, $2, $3}'
+# gcloud's own --format/--filter expressions over the repeated `quotas` field
+# have burned us twice here -- once printing the field names instead of the
+# values, once printing nothing at all.  Parse the JSON instead: it either
+# works or it raises, and it cannot quietly print the wrong thing.
+gcloud compute regions describe "$REGION" --format=json 2>/dev/null | python3 -c '
+import json, sys
+try:
+    quotas = json.load(sys.stdin).get("quotas", [])
+except Exception:
+    print("  could not read quotas (not logged in?)"); sys.exit()
+rows = [q for q in quotas if "CPUS" in q["metric"]]
+if not rows:
+    print("  no CPU quota reported")
+for q in rows:
+    metric, used, limit = q["metric"], q["usage"], q["limit"]
+    print("  %-18s %6.0f used of %6.0f   ->  %.0f free" % (metric, used, limit, limit - used))
+'
 echo ""
 echo "  6 nodes x n1-standard-4 needs 24 vCPU."
 echo "  6 nodes x e2-standard-2 needs 12 vCPU  <- use this if the number above is tight."
