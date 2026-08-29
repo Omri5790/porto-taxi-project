@@ -62,7 +62,13 @@ else
     HAVE_RAW=0
   fi
   if gcloud storage ls "$BUCKET/data/h3_encoded_trips.parquet/_SUCCESS" >/dev/null 2>&1; then
-    echo "  data/h3_encoded_trips.parquet  present (stage 2 output already uploaded)"
+    # WHEN it was written matters as much as whether it exists: a parquet
+    # produced before the stage 1 rewrite carries the old duration bug into
+    # every speed Stage 3 publishes.
+    WHEN=$(gcloud storage ls -l "$BUCKET/data/h3_encoded_trips.parquet/_SUCCESS" 2>/dev/null | awk 'NR==1{print $2}')
+    echo "  data/h3_encoded_trips.parquet  present, written ${WHEN:-?}"
+    echo "                                 ^ if that predates the stage 1 rewrite,"
+    echo "                                   re-run stages 1-2 instead of reusing it."
     HAVE_H3=1
   else
     echo "  data/h3_encoded_trips.parquet  MISSING"
@@ -73,9 +79,13 @@ fi
 # ── 3. quota ──────────────────────────────────────────────────────────────────
 hr
 echo "CPU quota in $REGION:"
+# --flatten turns the quotas array into one record each; without it the format
+# expression below silently prints the field NAMES instead of their values.
 gcloud compute regions describe "$REGION" \
-  --format="table[no-heading](quotas.filter(\"metric:CPUS\").extract(metric,usage,limit))" 2>/dev/null \
-  | tr -d "[]'" | awk -F', *' '{printf "  %s: %s used of %s\n", $1, $2, $3}'
+  --flatten="quotas[]" \
+  --filter="quotas.metric=CPUS OR quotas.metric=PREEMPTIBLE_CPUS" \
+  --format="value[separator='  '](quotas.metric, quotas.usage, quotas.limit)" 2>/dev/null \
+  | awk '{printf "  %-18s %s used of %s free\n", $1, $2, $3}'
 echo ""
 echo "  6 nodes x n1-standard-4 needs 24 vCPU."
 echo "  6 nodes x e2-standard-2 needs 12 vCPU  <- use this if the number above is tight."
