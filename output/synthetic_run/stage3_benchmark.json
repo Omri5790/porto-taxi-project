@@ -14,7 +14,7 @@
         "additive_error_pct_of_support": 3.013
       },
       "cms_memory_mb": 32.0,
-      "cms_build_sec": 5.08,
+      "cms_build_sec": 6.4,
       "candidates_after_cms": 386,
       "exact_frequent": 386,
       "pruned_before_shuffle_pct": 99.9308,
@@ -23,7 +23,7 @@
       "bloom_hashes": 7,
       "bloom_memory_kb": 0.5,
       "bloom_observed_fp_rate": 0.01013,
-      "runtime_sec": 11.58
+      "runtime_sec": 13.69
     },
     "method_a_lsh_clustering": {
       "algorithm": "MinHash + LSH clustering of trajectory segments",
@@ -40,7 +40,7 @@
       "buckets_above_support": 786,
       "representatives": 200,
       "min_support_trips": 60,
-      "runtime_sec": 31.37,
+      "runtime_sec": 36.91,
       "distributed": true
     },
     "method_b_suffix_array": {
@@ -57,7 +57,7 @@
       "distinct_repeats_found": 3863,
       "candidates": 3863,
       "min_support_trips": 60,
-      "runtime_sec": 6.09,
+      "runtime_sec": 8.23,
       "distributed": true,
       "exact_within_scope": true
     },
@@ -396,7 +396,7 @@
           "maximal_so_far": 144
         }
       ],
-      "runtime_sec": 144.79,
+      "runtime_sec": 186.36,
       "distributed": true
     },
     "per_method_scorecard": {
@@ -461,7 +461,7 @@
       "trips_scored": 19973,
       "min_trip_cells": 8,
       "top_n": 100,
-      "runtime_sec": 4.36,
+      "runtime_sec": 4.91,
       "distributed": true,
       "transition_gate": {
         "k": 2,
@@ -477,7 +477,7 @@
           "additive_error_pct_of_support": 9.346
         },
         "cms_memory_mb": 32.0,
-        "cms_build_sec": 3.44,
+        "cms_build_sec": 4.2,
         "candidates_after_cms": 2266,
         "exact_frequent": 2266,
         "pruned_before_shuffle_pct": 99.6071,
@@ -486,7 +486,7 @@
         "bloom_hashes": 7,
         "bloom_memory_kb": 2.7,
         "bloom_observed_fp_rate": 0.01026,
-        "runtime_sec": 9.05
+        "runtime_sec": 11.16
       }
     }
   },
@@ -494,8 +494,8 @@
     "total_trips": 20000,
     "candidates_verified": 893,
     "corridors_reported": 46,
-    "verification_sec": 1.78,
-    "total_runtime_sec": 218.64
+    "verification_sec": 2.28,
+    "total_runtime_sec": 275.07
   },
   "thresholds": {
     "1": {
@@ -653,5 +653,5 @@
       "max_possible_support_pct": 0.0
     }
   ],
-  "generated_utc": "2026-08-27T17:35:44.710939+00:00"
+  "generated_utc": "2026-08-29T12:27:49.654222+00:00"
 }

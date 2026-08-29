@@ -6,7 +6,7 @@
     "mining_min_support_trips": 60,
     "max_gap_cells": 8,
     "max_tortuosity": 2.5,
-    "generated_utc": "2026-08-27T17:35:44.645798+00:00",
+    "generated_utc": "2026-08-29T12:27:49.574931+00:00",
     "support_definition": "number of distinct trips that traverse every segment of the corridor contiguously and in order, spending at most 8 cells inside each hole; measured over 100% of trips"
   },
   "length_ceiling": [
