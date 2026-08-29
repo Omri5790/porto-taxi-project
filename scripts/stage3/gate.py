@@ -2,9 +2,11 @@
 The frequent-n-gram gate: where the approximate structures actually pay.
 =======================================================================
 
-Every method here faces the same wall.  A trip of ~30 H3 cells contains ~28
-3-grams; across 1.6M trips that is ~45M n-grams, of which fewer than 1 in 1,000
-is frequent enough to matter.  Shuffling all of them to find out which is the
+Every method here faces the same wall.  A trip of n H3 cells contains n-k+1
+k-grams, so the stream is roughly the size of the dataset itself.  Measured on
+the encoded Porto trips: 1,622,765 trips, 27,424,663 res-9 cells, 16.9 cells per
+trip on average, giving 24.2M 3-gram positions -- of which only a handful are
+frequent enough to matter.  Shuffling all of them to find out which is the
 single most expensive thing the pipeline could do.
 
 The gate avoids that shuffle:
@@ -57,7 +59,7 @@ def ngrams_of_trip(cells, k: int):
 
 
 def build_gate(sc, trips_rdd, k: int, min_support: int,
-               expected_mass: int = 45_000_000,
+               expected_mass: int = 25_000_000,
                cms_memory_mb: float = 32.0,
                bloom_error: float = 0.01,
                depth_tree: int = 4):

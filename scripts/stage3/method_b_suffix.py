@@ -22,7 +22,7 @@ sort in parallel across the cluster.
 
 Keeping the shuffle affordable
 ------------------------------
-Naively every position of every trip emits a suffix -- ~45M suffixes of up to
+Naively every position of every trip emits a suffix -- ~24M suffixes of up to
 ``MAX_SUFFIX`` cells each, which is the shuffle that kills this approach.  The
 Bloom filter from :mod:`gate` removes it: by anti-monotonicity, a suffix whose
 **first k cells are not a frequent k-gram** cannot begin a frequent repeat of

@@ -224,7 +224,7 @@ def test_support_of_a_chain_is_not_the_min_of_its_parts():
 
 # ── sketch sizing under a memory budget ──────────────────────────────────────
 def test_cms_respects_its_memory_budget():
-    cms = CountMinSketch.for_budget(expected_mass=45_000_000,
+    cms = CountMinSketch.for_budget(expected_mass=25_000_000,
                                     min_support=800, max_memory_mb=32.0)
     assert cms.memory_bytes() <= 32 * 1024 * 1024
     rep = cms.error_report(800)
