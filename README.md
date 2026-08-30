@@ -279,6 +279,21 @@ run.
 
 ---
 
+### One output that lags the run
+
+`output/stage3_anomalous_routes.json` from run `20260830T121916Z` still carries
+the old `low_diversity_cells` list. The run's code zip was uploaded at 12:19;
+the commit that split that list into `busiest_cells` (activity hotspots) and
+`concentrated_cells` (the structural signal, restricted to cells crossed by at
+most half the fleet) landed at 13:11, while stage 3 was still running. Only
+that one file is affected, only its cell lists, and nothing in the deck, the
+map or the notebook reads them.
+
+`tools/rerun_anomalies.py` regenerates it through the same module and the same
+RDD operations, against the same encoded parquet, and stamps the output with
+why it was regenerated. It needs a JVM that Spark accepts — Java 17 or a
+Dataproc cluster — so it is left as a one-command fix rather than run here.
+
 ## Verification
 
 ```bash

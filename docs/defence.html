@@ -1,0 +1,650 @@
+<title>הגנת פרויקט מוניות פורטו</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@700;900&amp;family=Heebo:wght@300;400;500;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+:root {
+  /* Porto granite, biased cyan-green; azulejo teal carries structure, and a
+     tail-light red is reserved for the two configurations that came back empty. */
+  --ground:    #F1F4F4;
+  --surface:   #FFFFFF;
+  --sunken:    #E7ECEC;
+  --ink:       #0B1518;
+  --ink-soft:  #2C4348;
+  --muted:     #607A80;
+  --faint:     #8CA2A7;
+  --line:      #D6DFDF;
+  --line-soft: #E6ECEC;
+  --teal:      #0E5E5A;
+  --teal-lit:  #14837C;
+  --moss:      #1E6B45;
+  --tail:      #A32A22;
+  --console:   #08110F;
+  --console-fg:#C3D6D2;
+  --console-dim:#63807B;
+  --console-hi:#4FD1BE;
+  --console-no:#EE8878;
+
+  --measure: 68ch;
+  --s-1: .78rem;  --s0: 1rem;   --s1: 1.22rem;
+  --s2:  1.62rem; --s3: 2.2rem; --s4: 3.1rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:  #0A1113; --surface: #101B1D; --sunken: #162427;
+    --ink:     #E4EDEC; --ink-soft:#BCCFCD; --muted:  #86A09E;
+    --faint:   #63807D; --line:    #223437; --line-soft:#1A2A2D;
+    --teal:    #4FB3A6; --teal-lit:#6FCcBE; --moss:   #5DBE8B;
+    --tail:    #E07A6E; --console: #050C0B; --console-fg:#C3D6D2;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:  #0A1113; --surface: #101B1D; --sunken: #162427;
+  --ink:     #E4EDEC; --ink-soft:#BCCFCD; --muted:  #86A09E;
+  --faint:   #63807D; --line:    #223437; --line-soft:#1A2A2D;
+  --teal:    #4FB3A6; --teal-lit:#6FCcBE; --moss:   #5DBE8B;
+  --tail:    #E07A6E; --console: #050C0B; --console-fg:#C3D6D2;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 var(--s0)/1.65 "Heebo", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page { direction: rtl; }
+
+.wrap {
+  max-width: var(--measure);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+.wide { max-width: 78rem; }
+
+/* ── top rail ─────────────────────────────────────────────────────────── */
+.rail {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter: blur(9px);
+  border-block-end: 1px solid var(--line);
+}
+.rail-in {
+  max-width: 78rem; margin-inline: auto;
+  padding: .55rem 1.5rem;
+  display: flex; gap: .4rem; align-items: center;
+  overflow-x: auto; scrollbar-width: none;
+}
+.rail-in::-webkit-scrollbar { display: none; }
+.rail a {
+  flex: none;
+  font-size: var(--s-1); font-weight: 500;
+  color: var(--muted); text-decoration: none;
+  padding: .28rem .62rem; border-radius: 999px;
+  border: 1px solid transparent;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.rail a:hover, .rail a:focus-visible {
+  color: var(--teal); border-color: var(--line);
+  background: var(--surface); outline: none;
+}
+.rail .tag {
+  flex: none; margin-inline-end: .5rem;
+  font: 500 var(--s-1)/1 "IBM Plex Mono", ui-monospace, monospace;
+  color: var(--faint); letter-spacing: .04em;
+}
+
+/* ── masthead ─────────────────────────────────────────────────────────── */
+.mast { padding: 4rem 0 2.5rem; }
+.eyebrow {
+  font: 500 var(--s-1)/1 "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: .11em; color: var(--teal); text-transform: uppercase;
+  margin: 0 0 1rem;
+}
+h1 {
+  font-family: "Frank Ruhl Libre", Georgia, serif;
+  font-weight: 900; font-size: var(--s4); line-height: 1.08;
+  letter-spacing: -.015em; margin: 0 0 1rem; text-wrap: balance;
+}
+.lede { font-size: var(--s1); color: var(--ink-soft); margin: 0 0 1.6rem; text-wrap: pretty; }
+.runline {
+  display: flex; flex-wrap: wrap; gap: .35rem .9rem;
+  font: 400 var(--s-1)/1.9 "IBM Plex Mono", ui-monospace, monospace;
+  color: var(--faint); padding-block-start: 1rem;
+  border-block-start: 1px solid var(--line);
+}
+.runline b { color: var(--ink-soft); font-weight: 500; }
+
+/* ── sections ─────────────────────────────────────────────────────────── */
+section { padding-block: 2.6rem; }
+h2 {
+  font-family: "Frank Ruhl Libre", Georgia, serif;
+  font-weight: 700; font-size: var(--s3); line-height: 1.15;
+  margin: 0 0 .5rem; text-wrap: balance;
+}
+h3 {
+  font-size: var(--s1); font-weight: 700; margin: 2rem 0 .5rem;
+  text-wrap: balance;
+}
+.sub { color: var(--muted); margin: 0 0 1.6rem; text-wrap: pretty; }
+p { margin: 0 0 1rem; text-wrap: pretty; }
+strong { font-weight: 700; }
+.hr { height: 1px; background: var(--line); border: 0; margin: 0; }
+
+/* ── figures: a number and the file it came from ──────────────────────── */
+.figs { display: grid; gap: 1px; background: var(--line);
+        border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+        grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); }
+.fig { background: var(--surface); padding: 1rem 1.1rem 1.05rem; }
+.fig .v {
+  font: 500 var(--s2)/1.1 "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  color: var(--ink); display: block; direction: ltr; text-align: right;
+}
+.fig .v.q { color: var(--tail); }
+.fig .v.g { color: var(--moss); }
+.fig .l { display: block; font-size: var(--s-1); color: var(--muted); margin-block-start: .3rem; }
+.fig .src {
+  display: block; direction: ltr; text-align: right;
+  font: 400 .68rem/1.5 "IBM Plex Mono", ui-monospace, monospace;
+  color: var(--faint); margin-block-start: .45rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── tables ───────────────────────────────────────────────────────────── */
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: var(--s-1); }
+caption {
+  text-align: start; color: var(--muted); font-size: var(--s-1);
+  padding-block-end: .6rem;
+}
+th, td { padding: .55rem .7rem; border-block-end: 1px solid var(--line-soft); }
+thead th {
+  text-align: start; font-weight: 500; color: var(--muted);
+  border-block-end: 1px solid var(--line); white-space: nowrap;
+}
+td.n, th.n {
+  text-align: end; direction: ltr;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+tbody tr:last-child td { border-block-end: 0; }
+tr.zero td { color: var(--tail); }
+tr.zero td.k { font-weight: 700; }
+
+.pill {
+  display: inline-block; font: 500 .7rem/1 "IBM Plex Mono", ui-monospace, monospace;
+  padding: .24rem .5rem; border-radius: 3px; white-space: nowrap;
+}
+.pill.ok  { color: var(--moss); background: color-mix(in srgb, var(--moss) 12%, transparent); }
+.pill.no  { color: var(--tail); background: color-mix(in srgb, var(--tail) 12%, transparent); }
+
+/* ── the two-reasons split ────────────────────────────────────────────── */
+.split { display: grid; gap: 1px; background: var(--line);
+         border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+         grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); }
+.half { background: var(--surface); padding: 1.5rem 1.4rem; }
+.half .k {
+  font: 500 var(--s-1)/1 "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: .08em; margin: 0 0 .6rem;
+}
+.half.exists .k { color: var(--teal); }
+.half.absent .k { color: var(--tail); }
+.half h4 { font-size: var(--s1); font-weight: 700; margin: 0 0 .7rem; text-wrap: balance; }
+.half p { font-size: var(--s-1); color: var(--ink-soft); margin: 0 0 .8rem; }
+.half p:last-child { margin-block-end: 0; }
+.half dl { margin: 1rem 0 0; display: grid; grid-template-columns: 1fr auto; gap: .3rem .8rem;
+           font-size: var(--s-1); }
+.half dt { color: var(--muted); }
+.half dd { margin: 0; direction: ltr; text-align: end; font-weight: 500;
+           font-family: "IBM Plex Mono", ui-monospace, monospace;
+           font-variant-numeric: tabular-nums; }
+
+/* ── console panels ───────────────────────────────────────────────────── */
+.console {
+  background: var(--console); color: var(--console-fg);
+  border-radius: 6px; padding: 1.15rem 1.3rem;
+  direction: ltr; overflow-x: auto;
+  font: 400 .81rem/1.72 "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+}
+.console .dim { color: var(--console-dim); }
+.console .hi  { color: var(--console-hi); }
+.console .no  { color: var(--console-no); }
+.cap { font-size: var(--s-1); color: var(--faint); margin-block-start: .55rem; }
+
+/* ── question cards ───────────────────────────────────────────────────── */
+.qa { display: grid; gap: 1px; background: var(--line);
+      border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.q { background: var(--surface); padding: 1.15rem 1.3rem; }
+.q h4 {
+  font-size: var(--s0); font-weight: 700; margin: 0 0 .5rem;
+  color: var(--ink); text-wrap: balance;
+}
+.q h4::before {
+  content: "?"; display: inline-block; width: 1.35em;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  color: var(--teal); font-weight: 500;
+}
+.q p { font-size: var(--s-1); color: var(--ink-soft); margin: 0 0 .5rem; padding-inline-start: 1.35em; }
+.q p:last-child { margin-block-end: 0; }
+.q .num {
+  direction: ltr; unicode-bidi: isolate;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-weight: 500; color: var(--ink);
+}
+
+/* ── file list ────────────────────────────────────────────────────────── */
+.files { list-style: none; margin: 0; padding: 0; display: grid; gap: .1rem; }
+.files li {
+  display: flex; gap: .9rem; align-items: baseline;
+  padding: .5rem 0; border-block-end: 1px solid var(--line-soft);
+  font-size: var(--s-1);
+}
+.files li:last-child { border-block-end: 0; }
+.files code {
+  direction: ltr; flex: none; min-width: 17rem;
+  font: 400 .78rem/1.6 "IBM Plex Mono", ui-monospace, monospace;
+  color: var(--teal);
+}
+.files span { color: var(--muted); }
+
+footer {
+  padding: 3rem 0 4rem; color: var(--faint); font-size: var(--s-1);
+  border-block-start: 1px solid var(--line); margin-block-start: 2rem;
+}
+
+@media (max-width: 34rem) {
+  :root { --s4: 2.3rem; --s3: 1.7rem; }
+  .files li { flex-direction: column; gap: .1rem; }
+  .files code { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+
+<div class="page">
+
+<nav class="rail" aria-label="ניווט">
+  <div class="rail-in">
+    <span class="tag">20260830T121916Z</span>
+    <a href="#config">שש הקונפיגורציות</a>
+    <a href="#long">20 ו־40 ק"מ</a>
+    <a href="#pipeline">מספרי הפייפליין</a>
+    <a href="#methods">שלוש השיטות</a>
+    <a href="#ask">מה ישאלו</a>
+    <a href="#files">איפה הכל</a>
+  </div>
+</nav>
+
+<header class="mast wrap">
+  <p class="eyebrow">גיליון הגנה &middot; כל מספר נקרא מקובץ</p>
+  <h1>מסלולים פופולריים ארוכים בנסיעות המוניות של פורטו</h1>
+  <p class="lede">
+    1,616,575 נסיעות נקיות, מקודדות לתאי H3 ברזולוציה 9, נכרו על
+    אשכול Dataproc בן 6 מכונות. ארבע מתוך שש הקונפיגורציות
+    עומדות ביעד של 100 מסלולים. שתיים חוזרות ריקות — משתי סיבות שונות, ורק אחת
+    מהן היא מגבלה של הפייפליין.
+  </p>
+  <div class="runline">
+    <span><b>ריצה</b> 20260830T121916Z</span>
+    <span><b>אשכול</b> 5&times;e2-standard-2</span>
+    <span><b>אזור</b> europe-west1</span>
+    <span><b>זמן קיר</b> 106 דק'</span>
+    <span><b>Spark</b> 2.1-debian11</span>
+  </div>
+</header>
+
+<hr class="hr">
+
+<section id="config" class="wrap wide">
+  <h2>שש הקונפיגורציות</h2>
+  <p class="sub">
+    היעד הוא 100 מסלולים לכל סף אורך. העמודה "תקרה" היא החסם העליון על התמיכה
+    שנובע מהתפלגות אורכי הנסיעות בלבד: נסיעה יכולה לעבור מסלול באורך L רק אם היא
+    עצמה באורך L, ולכן כל שאר הנסיעות תורמות אפס בהגדרה — לא בקירוב.
+  </p>
+  <div class="scroll">
+  <table>
+    <caption>נקרא מ־<code>stage3_subroutes.json</code> · שדות <code>by_threshold_km</code> ו־<code>length_ceiling</code></caption>
+    <thead><tr>
+      <th>סף אורך</th><th class="n">X שנבחר</th><th class="n">נמצאו</th>
+      <th class="n">נסיעות ארוכות מספיק</th><th class="n">תקרת תמיכה</th><th></th>
+    </tr></thead>
+    <tbody>
+<tr class=""><td class="k">&ge; 1 ק"מ</td><td class="n">0.1%</td><td class="n">106</td><td class="n">1,574,154</td><td class="n">97.376%</td><td><span class="pill ok">עומד ביעד</span></td></tr>
+<tr class=""><td class="k">&ge; 3 ק"מ</td><td class="n">0.1%</td><td class="n">106</td><td class="n">1,061,365</td><td class="n">65.655%</td><td><span class="pill ok">עומד ביעד</span></td></tr>
+<tr class=""><td class="k">&ge; 5 ק"מ</td><td class="n">0.002%</td><td class="n">436</td><td class="n">607,096</td><td class="n">37.554%</td><td><span class="pill ok">עומד ביעד</span></td></tr>
+<tr class=""><td class="k">&ge; 10 ק"מ</td><td class="n">0.002%</td><td class="n">339</td><td class="n">200,530</td><td class="n">12.405%</td><td><span class="pill ok">עומד ביעד</span></td></tr>
+<tr class="zero"><td class="k">&ge; 20 ק"מ</td><td class="n">0.002%</td><td class="n">0</td><td class="n">25,223</td><td class="n">1.560%</td><td><span class="pill no">ריק</span></td></tr>
+<tr class="zero"><td class="k">&ge; 40 ק"מ</td><td class="n">0.002%</td><td class="n">0</td><td class="n">3,509</td><td class="n">0.217%</td><td><span class="pill no">ריק</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>עקומת הפשרה</h3>
+  <p class="sub">
+    ה־X נבחר לכל סף אורך בנפרד: הגבוה ביותר שעדיין מחזיר 100 מסלולים. הסריקה הזו
+    היא ההצדקה לבחירה, ולא החלטה שרירותית.
+  </p>
+  <div class="scroll">
+  <table>
+    <caption>נקרא מ־<code>stage3_subroutes.json</code> · שדה <code>support_sweep</code></caption>
+    <thead><tr>
+      <th class="n">X</th><th class="n">מינימום נסיעות</th><th class="n">מסלולים</th>
+      <th class="n">הארוך ביותר (ק"מ)</th><th class="n">ממוצע (ק"מ)</th>
+    </tr></thead>
+    <tbody>
+<tr class=""><td class="n">0.002%</td><td class="n">33</td><td class="n">1,380</td><td class="n">18.48</td><td class="n">6.08</td></tr>
+<tr class=""><td class="n">0.05%</td><td class="n">809</td><td class="n">304</td><td class="n">4.95</td><td class="n">4.09</td></tr>
+<tr class=""><td class="n">0.1%</td><td class="n">1,617</td><td class="n">106</td><td class="n">4.53</td><td class="n">4.04</td></tr>
+<tr class=""><td class="n">0.2%</td><td class="n">3,234</td><td class="n">25</td><td class="n">4.34</td><td class="n">4.02</td></tr>
+<tr class=""><td class="n">0.3%</td><td class="n">4,850</td><td class="n">9</td><td class="n">4.02</td><td class="n">3.98</td></tr>
+<tr class=""><td class="n">0.5%</td><td class="n">8,083</td><td class="n">1</td><td class="n">3.98</td><td class="n">3.98</td></tr>
+<tr class="zero"><td class="n">1.0%</td><td class="n">16,166</td><td class="n">0</td><td class="n">&mdash;</td><td class="n">&mdash;</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="cap">
+    ככל ש־X יורד נמצאים יותר מסלולים וארוכים יותר, אבל המילה "פופולרי" נחלשת.
+    זו הפשרה שהבריף מבקש להתנסות בה, והטבלה היא הניסוי.
+  </p>
+</section>
+
+<hr class="hr">
+
+<section id="long" class="wrap wide">
+  <h2>למה 20 ו־40 ק"מ ריקים</h2>
+  <p class="sub">
+    זו השאלה הקשה, ויש לה תשובה מדודה ולא הסבר. נסיעה יכולה לעבור מסלול באורך
+    20 ק"מ רק אם היא עצמה באורך 20 ק"מ, ולכן התמיכה של מסלול כזה מתוך
+    1,616,575 הנסיעות שווה <em>בדיוק</em> לתמיכה שלו מתוך
+    25,223 הנסיעות הארוכות. הקבוצה הזו קטנה מספיק
+    לכרייה ממצה על מכונה אחת, בסף של שתי נסיעות — נמוך ככל שהמילה "משותף" מרשה.
+  </p>
+
+  <div class="split">
+    <div class="half exists">
+      <p class="k">&ge; 20 ק"מ</p>
+      <h4>קיימים — אבל לא פופולריים</h4>
+      <p>
+        125 מסלולים תקינים באורך 20 ק"מ ומעלה קיימים
+        בדאטה: מסלול פשוט, בלי חזרה על תא, ובתוך פי 2.5 מהקו הישר בין קצותיו.
+        הארוך שבהם 26.93 ק"מ.
+      </p>
+      <p>
+        אף אחד מהם לא משותף ליותר מ־3 נסיעות, מול רצפת
+        כרייה של 33. שלב 3 לא מדווח עליהם כי אף אחד מהם
+        אינו <em>פופולרי</em> — וזו השאלה שהבריף שאל.
+      </p>
+      <dl>
+        <dt>הקטע הארוך ביותר ששתי נסיעות חולקות</dt>
+        <dd>26.93 ק"מ</dd>
+        <dt>מסלולים תקינים נפרדים</dt><dd>125</dd>
+        <dt>התמיכה הטובה ביותר</dt><dd>3 נסיעות</dd>
+        <dt>רצפת הכרייה</dt><dd>33 נסיעות</dd>
+      </dl>
+    </div>
+    <div class="half absent">
+      <p class="k">&ge; 40 ק"מ</p>
+      <h4>לא קיימים — בשום סף שהוא</h4>
+      <p>
+        באותה בדיקה ממצה, בסף של שתי נסיעות, אין ולו מועמד אחד באורך 40 ק"מ. אין
+        בדאטהסט שתי נסיעות שחולקות 40 קילומטרים רצופים.
+      </p>
+      <p>
+        זו עובדה על פורטו ולא מגבלה של הפייפליין: העיר כ־25 על 22 קילומטר, ושתי
+        מוניות שנוסעות 40 ק"מ עושות זאת בשתי שליחויות שונות ובכיוונים שונים.
+      </p>
+      <dl>
+        <dt>נסיעות באורך 40 ק"מ ומעלה</dt>
+        <dd>3,509</dd>
+        <dt>תקרת תמיכה תיאורטית</dt><dd>0.217%</dd>
+        <dt>מועמדים בסף של 2 נסיעות</dt><dd>0</dd>
+      </dl>
+    </div>
+  </div>
+
+  <h3>שמונת המסלולים הארוכים שכן קיימים</h3>
+  <div class="console">  <span class="dim"># tools/export_long_corridors.py</span>
+  <span class="dim">  #      km   trips  cells  tortuosity</span>
+   1    21.94     3     61       1.25
+   2    21.63     3     60       1.15
+   3    21.57     3     60       1.26
+   4    21.27     3     59       1.15
+   5    21.21     3     59       1.26
+   6    20.90     3     58       1.15
+   7    20.84     3     58       1.26
+   8    20.53     3     57       1.15
+  <span class="dim">  ... 125 distinct, top 100 exported</span>
+
+  <span class="hi">best support 3 trips</span>   <span class="dim">vs a mining floor of 33</span>
+  <span class="no">&gt;= 40 km: no candidate at all, at a support of two</span></div>
+  <p class="cap">
+    הם מצוירים על המפה מקווקווים ובאפור, בשכבה נפרדת, עם התמיכה האמיתית בכל
+    tooltip — כדי שלא יבלבלו אותם עם פלט הכרייה אף פעם.
+  </p>
+</section>
+
+<hr class="hr">
+
+<section id="pipeline" class="wrap wide">
+  <h2>מספרי הפייפליין</h2>
+  <p class="sub">כל מספר כאן נקרא מהקובץ שכתוב מתחתיו.</p>
+
+  <h3>שלב 1 · ניקוי</h3>
+  <div class="figs">
+    <div class="fig"><span class="v">1,710,670</span><span class="l">נסיעות גולמיות</span><span class="src">cleaning_report.json</span></div>
+    <div class="fig"><span class="v">1,616,575</span><span class="l">נסיעות נקיות</span><span class="src">cleaning_report.json</span></div>
+    <div class="fig"><span class="v">5.50%</span><span class="l">הוסרו</span><span class="src">cleaning_report.json</span></div>
+    <div class="fig"><span class="v">440</span><span class="l">מוניות בצי</span><span class="src">cleaning_report.json</span></div>
+    <div class="fig"><span class="v">16,395</span><span class="l">נסיעות שיצאו מפורטו ונשמרו</span><span class="src">cleaning_report.json</span></div>
+  </div>
+  <div class="scroll" style="margin-block-start:1.2rem">
+  <table>
+    <caption>כל כלל ניקוי ומה הוא הסיר · <code>cleaning_report.json</code></caption>
+    <thead><tr><th>כלל</th><th class="n">נסיעות</th><th class="n">מהגולמי</th></tr></thead>
+    <tbody>
+<tr><td>1. MISSING_DATA flag set by the telemetry</td><td class="n">10</td><td class="n">0.0006%</td></tr>
+<tr><td>2. empty POLYLINE (booking cancelled immediately)</td><td class="n">5,901</td><td class="n">0.3450%</td></tr>
+<tr><td>2b. POLYLINE not valid JSON</td><td class="n">0</td><td class="n">0.0000%</td></tr>
+<tr><td>3. fewer than 2 GPS points</td><td class="n">30,607</td><td class="n">1.7892%</td></tr>
+<tr><td>4. duration over 24 hours (meter left running)</td><td class="n">0</td><td class="n">0.0000%</td></tr>
+<tr><td>5. a GPS point outside the wider region (satellite error)</td><td class="n">321</td><td class="n">0.0188%</td></tr>
+<tr><td>6. jump implying over 200 km/h (satellite error)</td><td class="n">38,092</td><td class="n">2.2267%</td></tr>
+<tr><td>7. under 2 distinct points after deduplication</td><td class="n">207</td><td class="n">0.0121%</td></tr>
+<tr><td>8. shorter than 0.2 km (not a journey)</td><td class="n">18,310</td><td class="n">1.0703%</td></tr>
+<tr><td>9. longer than 100.0 km (implausible for this city)</td><td class="n">647</td><td class="n">0.0378%</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="cap">
+    כלל 5 נמדד מול תיבה אזורית רחבה ולא מול פורטו עצמה. נסיעה שיוצאת מהעיר היא
+    מסע, לא שגיאת לוויין — הבחנה שהעלתה את מספר הנסיעות הארוכות פי כמה.
+  </p>
+
+  <h3>שלב 2 · קידוד מרחבי</h3>
+  <div class="figs">
+    <div class="fig"><span class="v">1,616,575</span><span class="l">נסיעות מקודדות</span><span class="src">h3_encoding_report.json</span></div>
+    <div class="fig"><span class="v">5,560</span><span class="l">תאים ייחודיים · רזולוציה 8</span><span class="src">h3_encoding_report.json</span></div>
+    <div class="fig"><span class="v">20,592</span><span class="l">תאים ייחודיים · רזולוציה 9</span><span class="src">h3_encoding_report.json</span></div>
+    <div class="fig"><span class="v">63,872</span><span class="l">תאים ייחודיים · רזולוציה 10</span><span class="src">h3_encoding_report.json</span></div>
+  </div>
+  <p class="cap">
+    שלב 3 עובד ברזולוציה 9 — צלע ~174 מטר, מרחק ~0.363 ק"מ בין מרכזי שכנים.
+    דק מספיק כדי להפריד רחובות סמוכים, גס מספיק כדי ששתי נסיעות באותו כביש
+    יחלקו תאים.
+  </p>
+
+  <h3>שלב 3 · השער המקורב</h3>
+  <div class="figs">
+    <div class="fig"><span class="v">23,354,267</span><span class="l">רצפים באורך 4 שזרמו</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">99.8748%</span><span class="l">נחתכו לפני ה־shuffle</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">29,234</span><span class="l">נפוצים במדויק</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">32 MB</span><span class="l">טבלת Count-Min (קבועה)</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">34.2 KB</span><span class="l">פילטר בלום משודר</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v g">0.00%</span><span class="l">טעויות חיוביות של הסקיצה</span><span class="src">stage3_benchmark.json</span></div>
+  </div>
+  <p class="cap">
+    הסקיצה לעולם לא מזלזלת בספירה, ולכן <code>estimate &lt; min_support</code> הוא
+    <em>הוכחה</em> שהרצף נדיר. מה שנחתך בשער נחתך בוודאות. הטבלה עצמה בגודל קבוע
+    ואינה מתכווצת — מה שמתכווץ היא רשימת השורדים.
+  </p>
+
+  <h3>שלב 3 · אימות וזיהוי חריגות</h3>
+  <div class="figs">
+    <div class="fig"><span class="v">2,782</span><span class="l">מועמדים שאומתו במדויק</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">1,380</span><span class="l">מסלולים מדווחים</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">24.4s</span><span class="l">זמן האימות</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">1,355,986</span><span class="l">נסיעות שנוקדו לחריגות</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">4.8 KB</span><span class="l">בלום המעברים</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">80 דק׳</span><span class="l">זמן שלב 3</span><span class="src">stage3_benchmark.json</span></div>
+  </div>
+</section>
+
+<hr class="hr">
+
+<section id="methods" class="wrap wide">
+  <h2>שלוש השיטות, ומה האימות תפס</h2>
+  <p class="sub">
+    כל שיטה מייצרת מועמדים בדרכה, וכל מועמד נספר אחר כך במדויק מול 100% מהנסיעות.
+    העמודה האחרונה היא הסיבה שהשלב הזה קיים.
+  </p>
+  <div class="scroll">
+  <table>
+    <caption>נקרא מ־<code>stage3_benchmark.json</code> · <code>per_method_scorecard</code></caption>
+    <thead><tr>
+      <th>שיטה</th><th class="n">מסלולים</th><th class="n">הארוך (ק"מ)</th>
+      <th class="n">ממוצע (ק"מ)</th><th class="n">ניפוח תמיכה</th>
+    </tr></thead>
+    <tbody>
+<tr><td class="k">A · MinHash + LSH</td><td class="n">1,320</td><td class="n">5.42</td><td class="n">4.15</td><td class="n" style="color:var(--tail)">172.68%</td></tr>
+<tr><td class="k">B · Suffix array + LCP</td><td class="n">1,333</td><td class="n">13.51</td><td class="n">10.46</td><td class="n" style="color:inherit">0.00%</td></tr>
+<tr><td class="k">C · Count-Min level-wise</td><td class="n">116</td><td class="n">18.48</td><td class="n">7.94</td><td class="n" style="color:inherit">0.00%</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="cap">
+    LSH הוא מבנה מקורב, והוא ניפח את התמיכה ב־172.68%.
+    שתי השיטות המדויקות לא ניפחו כלל. זו הדגמה חיה של למה מבנה הסתברותי חייב שלב
+    ודאות אחריו, ולא רק משפט בהקדמה.
+  </p>
+
+  <div class="figs" style="margin-block-start:1.4rem">
+    <div class="fig"><span class="v">4,496,659</span><span class="l">חלונות ש־MinHash חתם</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">35,973,272</span><span class="l">פליטות רצועות LSH</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">0.595</span><span class="l">סף דמיון (b=8, r=4)</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">21,805,095</span><span class="l">מיקומי סיומת שנשקלו</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">561,043</span><span class="l">חזרות נפרדות שנמצאו</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">3.30%</span><span class="l">סיומות שהבלום גזם</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">29,234</span><span class="l">זרעים לצמיחה</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">34</span><span class="l">סבבי צמיחה</span><span class="src">stage3_benchmark.json</span></div>
+    <div class="fig"><span class="v">118</span><span class="l">מסלולים מקסימליים</span><span class="src">stage3_benchmark.json</span></div>
+  </div>
+</section>
+
+<hr class="hr">
+
+<section id="ask" class="wrap">
+  <h2>מה סביר שישאלו</h2>
+  <p class="sub">והמספר שצריך לצטט בתשובה.</p>
+  <div class="qa">
+    <div class="q">
+      <h4>למה 20 ו־40 ק"מ ריקים? לא סיננתם יותר מדי?</h4>
+      <p>
+        סיננו יותר מדי — ותיקנו. הכלל הישן פסל כל נסיעה שיצאה מגבולות פורטו, כלומר
+        בדיוק את הנסיעות הבין־עירוניות. אחרי התיקון יש
+        <span class="num">3,509</span>
+        נסיעות של 40 ק"מ ומעלה במקום <span class="num">460</span>.
+      </p>
+      <p>
+        ואז בדקנו ממצה: מעל 20 ק"מ קיימים <span class="num">125</span>
+        מסלולים תקינים, אבל הטוב שבהם משותף ל־<span class="num">3</span>
+        נסיעות בלבד. מעל 40 ק"מ אין ולו מועמד אחד בסף של שתיים.
+      </p>
+    </div>
+    <div class="q">
+      <h4>איך ידעתם שהמסלול באמת רציף, ולא הדבקה של קטעים משתי נסיעות?</h4>
+      <p>
+        התמיכה מוגדרת כמספר הנסיעות שעוברות את <em>כל</em> מקטעי המסלול, ברצף
+        ובסדר, כשבכל חור הן נמצאות לכל היותר
+        <span class="num">8</span> תאים. זה נבדק לכל מועמד
+        מול 100% מהנסיעות, לא על דגימה.
+      </p>
+    </div>
+    <div class="q">
+      <h4>למה בכלל Count-Min? למה לא פשוט לספור?</h4>
+      <p>
+        ספירה מדויקת של <span class="num">23,354,267</span> רצפים
+        דורשת shuffle של כולם. הסקיצה חותכת
+        <span class="num">99.87%</span> מהם
+        <em>לפני</em> שמשהו עובר ברשת, ומשאירה
+        <span class="num">29,234</span> לספירה מדויקת.
+      </p>
+      <p>
+        וזה בטוח כי השגיאה חד־צדדית: הסקיצה אף פעם לא סופרת בחסר, ולכן אומדן מתחת
+        לסף הוא הוכחה שהרצף נדיר.
+      </p>
+    </div>
+    <div class="q">
+      <h4>אם LSH מקורב, איך אתם סומכים על התוצאות?</h4>
+      <p>
+        לא סומכים. LSH ניפח את התמיכה ב־<span class="num">172.68%</span>,
+        וזה בדיוק מה שהאימות המדויק תפס. מה שמדווח הוא הספירה המדויקת, לא הערכת
+        השיטה.
+      </p>
+    </div>
+    <div class="q">
+      <h4>למה רזולוציה 9 ולא 8 או 10?</h4>
+      <p>
+        שלושתן מקודדות ונשמרות, כדי שהפשרה תוצג ולא תיטען.
+        רזולוציה 9 נותנת <span class="num">20,592</span> תאים
+        על פני העיר — דק מספיק להפריד רחובות מקבילים, גס מספיק ששתי נסיעות באותו
+        כביש יחלקו תאים.
+      </p>
+    </div>
+    <div class="q">
+      <h4>מה הדאטה לא מכיל?</h4>
+      <p>
+        רק <span class="num">440</span> מוניות, ורק נסיעות בתשלום —
+        לא מכוניות פרטיות, לא אוטובוסים, ולא הנסיעה הריקה בין נוסע לנוסע. לכן X
+        מודד תדירות בתוך הדגימה שלנו, לא בתוך התנועה בפורטו.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="hr">
+
+<section id="files" class="wrap wide">
+  <h2>איפה כל דבר יושב</h2>
+  <ul class="files">
+    <li><code>output/stage3_subroutes.json</code><span>המסלולים עצמם, התקרה, וסריקת ה־X</span></li>
+    <li><code>output/stage3_benchmark.json</code><span>כל מדד ריצה וכל פרמטר של כל שיטה</span></li>
+    <li><code>output/long_corridors_probe.json</code><span>100 מסלולי 20 ק"מ שמתחת לרצפה, עם התמיכה האמיתית</span></li>
+    <li><code>output/longest_trips.json</code><span>100 המסעות הבודדים הארוכים ביותר, כהקשר</span></li>
+    <li><code>output/stage3_subroutes_map.html</code><span>המפה, שבע שכבות</span></li>
+    <li><code>output/porto_defence_he.pptx</code><span>מצגת ההגנה</span></li>
+    <li><code>output/stage3_methods_comparison.pptx</code><span>השוואת השיטות</span></li>
+    <li><code>notebooks/stage3_colab_enterprise.ipynb</code><span>הנוטבוק, קורא מ־GCS</span></li>
+    <li><code>tools/probe_long_corridors.py</code><span>הבדיקה הממצה של 20 ו־40 ק"מ</span></li>
+    <li><code>tools/verify_*.py</code><span>אימות עצמאי לכל שלב</span></li>
+  </ul>
+  <p class="cap" style="margin-block-start:1.2rem">
+    התוצאות בענן:
+    <code style="direction:ltr;display:inline-block">gs://porto-taxi-project-bf990986/results/20260830T121916Z</code>
+  </p>
+</section>
+
+<footer class="wrap wide">
+  נבנה מקבצי התוצאה של ריצה 20260830T121916Z על ידי
+  <code style="direction:ltr">tools/build_defence_page.py</code>.
+  אף מספר בעמוד הזה לא הוקלד ביד.
+</footer>
+
+</div>

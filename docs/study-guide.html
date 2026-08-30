@@ -1,0 +1,1079 @@
+<title>איך מוצאים מסלול פופולרי</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Heebo:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --bg:        #F5F7F9;
+    --surface:   #FFFFFF;
+    --ink:       #0E1922;
+    --ink-soft:  #33475A;
+    --muted:     #63788B;
+    --line:      #DCE3EA;
+    --line-soft: #E9EEF2;
+    --amber:     #C87508;
+    --amber-lit: #E8940C;
+    --hex:       #1B4F7E;
+    --good:      #14663F;
+    --bad:       #A3271C;
+    --console-bg:#0D1620;
+    --console-fg:#C6D4E1;
+    --console-dim:#6A7F92;
+    --console-hi:#F0AE3E;
+    --console-ok:#5FBE8C;
+    --console-no:#E5786B;
+
+    --measure: 34rem;
+    --step--1: 0.83rem;
+    --step-0:  1.0rem;
+    --step-1:  1.24rem;
+    --step-2:  1.6rem;
+    --step-3:  2.1rem;
+    --step-4:  2.9rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #0B131A;
+      --surface:   #111C25;
+      --ink:       #E7EEF4;
+      --ink-soft:  #B9C9D6;
+      --muted:     #859AAC;
+      --line:      #23343F;
+      --line-soft: #1A2833;
+      --amber:     #F0AE3E;
+      --amber-lit: #F5C265;
+      --hex:       #7FB2DE;
+      --good:      #63C795;
+      --bad:       #E5786B;
+      --console-bg:#060D13;
+      --console-fg:#C6D4E1;
+      --console-dim:#67798A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:        #0B131A;
+    --surface:   #111C25;
+    --ink:       #E7EEF4;
+    --ink-soft:  #B9C9D6;
+    --muted:     #859AAC;
+    --line:      #23343F;
+    --line-soft: #1A2833;
+    --amber:     #F0AE3E;
+    --amber-lit: #F5C265;
+    --hex:       #7FB2DE;
+    --good:      #63C795;
+    --bad:       #E5786B;
+    --console-bg:#060D13;
+    --console-fg:#C6D4E1;
+    --console-dim:#67798A;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    direction: rtl;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Heebo", "Arial Hebrew", system-ui, sans-serif;
+    font-size: var(--step-0);
+    font-weight: 300;
+    line-height: 1.75;
+    margin: 0;
+    padding: 0 1.25rem 6rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 46rem; margin: 0 auto; }
+  .flow > * + * { margin-top: 1.15rem; }
+
+  /* ── masthead ─────────────────────────────────────────────── */
+  header {
+    padding: 4.5rem 0 2.5rem;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 3.5rem;
+  }
+  .eyebrow {
+    font-size: var(--step--1);
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    color: var(--amber);
+    margin: 0 0 0.9rem;
+  }
+  h1 {
+    font-family: "Frank Ruhl Libre", "Times New Roman", serif;
+    font-weight: 900;
+    font-size: var(--step-4);
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0 0 1.1rem;
+  }
+  .standfirst {
+    font-size: var(--step-1);
+    color: var(--ink-soft);
+    font-weight: 300;
+    max-width: var(--measure);
+    margin: 0;
+  }
+
+  /* ── stage sections ───────────────────────────────────────── */
+  section { margin-bottom: 4rem; scroll-margin-top: 1.5rem; }
+
+  .stage-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+    margin-bottom: 1.4rem;
+  }
+  .stage-num {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: var(--step--1);
+    font-weight: 500;
+    color: var(--amber);
+    background: color-mix(in srgb, var(--amber) 12%, transparent);
+    border-radius: 3px;
+    padding: 0.15em 0.5em;
+    flex: none;
+    direction: ltr;
+  }
+  h2 {
+    font-family: "Frank Ruhl Libre", "Times New Roman", serif;
+    font-weight: 700;
+    font-size: var(--step-3);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  h3 {
+    font-family: "Heebo", sans-serif;
+    font-weight: 700;
+    font-size: var(--step-1);
+    line-height: 1.35;
+    margin: 2.4rem 0 0.7rem;
+  }
+  p { max-width: var(--measure); margin: 0; }
+  .lede { font-size: var(--step-1); color: var(--ink-soft); max-width: var(--measure); }
+
+  strong { font-weight: 700; color: var(--ink); }
+  em { font-style: normal; color: var(--amber); font-weight: 500; }
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+    direction: ltr;
+    unicode-bidi: embed;
+    background: var(--line-soft);
+    padding: 0.1em 0.36em;
+    border-radius: 3px;
+  }
+
+  ul { max-width: var(--measure); padding-inline-start: 1.15rem; margin: 0; }
+  li + li { margin-top: 0.45rem; }
+  li::marker { color: var(--amber); }
+
+  /* ── the console panels: every demo is real measured output ── */
+  .demo { margin: 1.9rem 0; }
+  .demo-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: var(--step--1);
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .demo-label b { font-weight: 500; color: var(--ink-soft); }
+  .demo-label span {
+    font-family: "IBM Plex Mono", monospace;
+    direction: ltr;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  pre {
+    direction: ltr;
+    text-align: left;
+    background: var(--console-bg);
+    color: var(--console-fg);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.79rem;
+    font-weight: 400;
+    line-height: 1.65;
+    margin: 0;
+    padding: 1.15rem 1.25rem;
+    border-radius: 7px;
+    overflow-x: auto;
+    font-variant-numeric: tabular-nums;
+    tab-size: 2;
+  }
+  pre b   { color: var(--console-hi); font-weight: 500; }
+  pre .ok { color: var(--console-ok); }
+  pre .no { color: var(--console-no); }
+  pre .dim{ color: var(--console-dim); }
+
+  /* ── takeaway callout ─────────────────────────────────────── */
+  .key {
+    border-inline-start: 3px solid var(--amber);
+    background: var(--surface);
+    border-radius: 0 7px 7px 0;
+    padding: 1rem 1.15rem;
+    margin: 1.8rem 0;
+    max-width: var(--measure);
+  }
+  .key p { font-size: var(--step-0); margin: 0; }
+  .key .tag {
+    display: block;
+    font-size: var(--step--1);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--amber);
+    margin-bottom: 0.35rem;
+  }
+
+  /* ── data tables ──────────────────────────────────────────── */
+  .tablewrap { overflow-x: auto; margin: 1.7rem 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+  th {
+    font-weight: 500;
+    font-size: var(--step--1);
+    color: var(--muted);
+    text-align: right;
+    padding: 0 0.8rem 0.5rem;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  td {
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid var(--line-soft);
+    color: var(--ink-soft);
+  }
+  td:first-child { color: var(--ink); }
+  .num { text-align: left; direction: ltr; }
+  .yes { color: var(--good); font-weight: 500; }
+  .nope { color: var(--bad); font-weight: 500; }
+
+  /* ── in-flow stat row ─────────────────────────────────────── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    overflow: hidden;
+    margin: 1.9rem 0;
+  }
+  .stats div { background: var(--surface); padding: 1rem 0.9rem; }
+  .stats .v {
+    font-family: "Frank Ruhl Libre", serif;
+    font-weight: 700;
+    font-size: var(--step-2);
+    line-height: 1.1;
+    color: var(--hex);
+    direction: ltr;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .stats .l { font-size: var(--step--1); color: var(--muted); margin-top: 0.3rem; line-height: 1.4; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1.6rem;
+    margin-top: 4rem;
+    font-size: var(--step--1);
+    color: var(--muted);
+    max-width: var(--measure);
+  }
+
+  @media (max-width: 40rem) {
+    :root { --step-4: 2.1rem; --step-3: 1.6rem; --step-2: 1.3rem; }
+    body { padding-inline: 1rem; }
+    header { padding-top: 3rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  .stale-note {
+    max-width: var(--measure);
+    margin: 2.5rem 0 -1.5rem;
+    padding: 0.95rem 1.1rem;
+    border: 1px solid var(--line);
+    border-inline-start: 3px solid var(--amber);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: var(--step--1);
+    line-height: 1.6;
+  }
+  .stale-note strong { color: var(--ink); }
+  .stale-note .n {
+    direction: ltr; unicode-bidi: isolate;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+
+<div class="wrap">
+
+<div class="stale-note">
+  <strong>המספרים בדף הזה הם מריצה קודמת.</strong>
+  אחרי שתוקן כלל הניקוי שפסל נסיעות שיצאו מגבולות פורטו, כל הספירות זזו:
+  <span class="n">1,616,575</span> נסיעות במקום <span class="n">1,602,542</span>,
+  ו־<span class="n">3,509</span> נסיעות של 40 ק"מ ומעלה במקום <span class="n">1,459</span>.
+  ההסברים והאלגוריתמים כאן נכונים כמו שהם — המספרים העדכניים יושבים בגיליון ההגנה.
+</div>
+
+<header>
+  <p class="eyebrow">מיחשוב ענן רב נתונים · פרויקט סיום</p>
+  <h1>איך מוצאים מסלול פופולרי</h1>
+  <p class="standfirst">
+    חברת תחבורה נותנת לך 1.71 מיליון נסיעות מוניות בפורטו ושואלת אילו מסלולים
+    הכי פופולריים. זה הסיפור של איך עונים על זה — כל שלב, למה הוא שם, ומה קורה
+    בו באמת. כל מספר בדף הזה נמדד בריצה, לא הוערך.
+  </p>
+</header>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">00</span><h2>מה בכלל מחפשים</h2></div>
+
+  <p class="lede">
+    השאלה נשמעת פשוטה עד שמנסים לנסח אותה. "מסלול פופולרי" הוא לא נסיעה שלמה —
+    אף שתי נסיעות לא זהות. והוא גם לא צומת עמוס — צומת הוא נקודה, לא מסלול.
+  </p>
+
+  <p>
+    מה שמחפשים הוא <strong>קטע דרך רצוף שהרבה נסיעות שונות עברו בו</strong>. חלק
+    מנסיעה אחת, חלק מנסיעה אחרת, והחפיפה ביניהן היא הממצא.
+  </p>
+
+  <p>
+    ויש סיבוך אחד נוסף שהבריף מדגיש: מותר שיהיו <em>חורים</em>. אם התנועה
+    מתפצלת לשתי דרכים חלופיות באמצע ומתאחדת אחר כך, המסלול הפופולרי חוצה את
+    הפער. זו דוגמת תל אביב–חיפה שבבריף: כביש 2 וכביש 4 בקצוות, שתי אפשרויות
+    באמצע.
+  </p>
+
+  <div class="key">
+    <span class="tag">ההגדרה שנשתמש בה לאורך כל הדרך</span>
+    <p>
+      מסלול הוא <strong>רשימה מסודרת של קטעים</strong>. נסיעה תומכת בו אם היא
+      עברה בכל קטע ברצף, בסדר הנכון, ובזבזה לכל היותר 8 תאים בכל חור.
+    </p>
+  </div>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">01</span><h2>לנקות בלי לשקר</h2></div>
+
+  <p>
+    מה שמגיע הוא CSV של 1,710,670 שורות. כל שורה היא נסיעה אחת בתשלום, עם רשימת
+    נקודות GPS כל 15 שניות. חלק מהשורות פגומות, וצריך להחליט אילו.
+  </p>
+
+  <p>
+    עשרה כללים, וכל אחד <strong>סופר את עצמו בנפרד</strong>. זה לא פרט טכני: אם
+    כלל לא עובד בכלל, הוא נראה בדיוק כמו כלל שלא היה לו מה להוריד. בלי מונה לכל
+    כלל אי אפשר להבחין ביניהם.
+  </p>
+
+  <div class="stats">
+    <div><div class="v">1,710,670</div><div class="l">שורות גולמיות</div></div>
+    <div><div class="v">108,128</div><div class="l">הוסרו — 6.3%</div></div>
+    <div><div class="v">1,602,542</div><div class="l">נסיעות נקיות</div></div>
+    <div><div class="v">440</div><div class="l">מוניות בצי</div></div>
+  </div>
+
+  <h3>הבאג שהכי קל לפספס</h3>
+
+  <p>
+    מונית שעומדת ברמזור ממשיכה לשדר את אותה נקודה. מוחקים כפילויות רצופות —
+    הגיוני. אבל אם אז מחשבים את משך הנסיעה מ<em>מספר הנקודות שנשארו</em>,
+    מוחקים גם את הזמן שהן ייצגו.
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>שתי נסיעות זהות, אחת עצרה ברמזור</b><span>tools/verify_stage1.py</span></div>
+<pre>  trip    raw  kept  duration      km    speed   <span class="dim">if from kept pts</span>
+  T11      10    10      135s   1.507    40.19             40.19
+  T12      12     8      165s   1.172    <b>25.58</b>             <span class="no">40.19</span></pre>
+  </div>
+
+  <p>
+    T12 היא T11 עם עצירה. המהירות האמיתית שלה 25.58 קמ"ש. אם גוזרים את המשך
+    אחרי מחיקת הכפילויות, היא מדווחת <strong>40.19</strong> — בדיוק כמו הנסיעה
+    שלא עצרה. העצירה נמחקה מהשעון.
+  </p>
+
+  <p>
+    לכן המשך מחושב מספירת הדגימות <em>המקורית</em>: <code>(n_raw − 1) × 15</code>.
+    הנקודות נמחקות, הזמן לא.
+  </p>
+
+  <h3>ואיפה הניקוי שיקר לנו</h3>
+
+  <p>
+    היה כלל שפסל נסיעה אם נקודה שלה נופלת מחוץ לתיבת הגבול של פורטו. ההצדקה:
+    תקלת לוויין שקופצת לאוקיינוס. מדדנו על 400,000 שורות גולמיות מה נפסל שם:
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>הנסיעות שנפסלו על יציאה מהתיבה</b><span>400,000 raw rows</span></div>
+<pre>  only ONE point outside the box  :  <b>0.4%</b>   <span class="dim">the glitch pattern</span>
+  more than HALF the trip outside : <b>42.1%</b>
+  median excursion past the edge  :  6.7 km
+  within 20 km of the box         : 78.6%   <span class="dim">neighbouring towns</span>
+  beyond 200 km                   :  0.7%   <span class="dim">a real satellite error</span>
+
+                              trips   median km   >=20 km
+  kept by the cleaning      373,564        3.91      1.0%
+  rejected: outside the box   4,482       <b>16.05</b>     <span class="no">24.8%</span></pre>
+  </div>
+
+  <p>
+    רק 0.4% הן "נקודה בודדת שקפצה". ב־42% <strong>יותר מחצי הנסיעה</strong>
+    מחוץ לתיבה — אלה נסיעות אמיתיות לעיירות שכנות. והן דווקא הארוכות: חציון 16
+    ק"מ מול 3.9 לנסיעות שנשמרו.
+  </p>
+
+  <div class="key">
+    <span class="tag">מה תוקן</span>
+    <p>
+      תיבת פורטו היא עכשיו <strong>אזור המחקר</strong> בלבד. התקינות נבדקת מול
+      תיבה אזורית רחבה שרק שגיאת לוויין אמיתית נופלת בה. וגליץ' בודד ממילא נתפס
+      — הוא יוצר קפיצה של מאות קמ"ש, וכלל הקפיצה מסיר אותו.
+    </p>
+  </div>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">02</span><h2>מקואורדינטות למשושים</h2></div>
+
+  <p>
+    שתי מוניות לא נוסעות באותן קואורדינטות לעולם. גם באותו נתיב, ה־GPS נותן
+    מספרים שונים. אז אי אפשר לשאול "האם שתי הנסיעות האלה חלקו קטע?" כל עוד
+    המיקום הוא מספר עשרוני.
+  </p>
+
+  <p>
+    הפתרון: לחלק את העיר ל<strong>תאים</strong>, ולהחליף כל נסיעה ברצף התאים
+    שעברה בהם. עכשיו "אותו קטע" הופך לשאלה על מחרוזות, ואת זה מחשבים.
+  </p>
+
+  <h3>למה משושים</h3>
+
+  <p>
+    ברשת ריבועית, צעד באלכסון ארוך פי 1.41 מצעד ישר. זה מטה כל חיפוש מסלולים
+    לטובת כבישים בכיווני הצירים. <strong>במשושה כל שישה השכנים באותו מרחק
+    בדיוק</strong> — 0.363 ק"מ ברזולוציה 9.
+  </p>
+
+  <h3>ולמה רזולוציה 9</h3>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>רזולוציה</th><th class="num">צלע</th><th class="num">תאים ייחודיים</th><th>הבעיה</th></tr></thead>
+      <tbody>
+        <tr><td>8</td><td class="num">461 מ'</td><td class="num">531</td><td>שני רחובות מקבילים נופלים באותו תא — מסלולים שונים מתמזגים</td></tr>
+        <tr><td><strong>9</strong></td><td class="num">174 מ'</td><td class="num">3,151</td><td><strong>תא ≈ קטע רחוב</strong></td></tr>
+        <tr><td>10</td><td class="num">66 מ'</td><td class="num">16,210</td><td>נתיב שונה באותו רחוב נופל בתא שונה — מסלולים זהים מתפצלים</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="key">
+    <span class="tag">פרט ששווה לדעת</span>
+    <p>
+      שלוש הרזולוציות מקודדות <strong>מהקואורדינטות</strong> ולא נגזרות זו מזו.
+      משושים לא מתחלקים למשושים, אז יחס אב/בן ב־H3 הוא קירוב — ב־7.1% מהנקודות
+      תא ה"אב" ברזולוציה 8 אינו התא שהנקודה עצמה נופלת בו.
+    </p>
+  </div>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">03</span><h2>הקיר</h2></div>
+
+  <p>
+    עכשיו יש 1.6 מיליון רצפי תאים, וצריך למצוא קטעים משותפים. הדרך הישירה: לפרק
+    כל נסיעה לכל תת־הרצפים שלה ולספור.
+  </p>
+
+  <div class="stats">
+    <div><div class="v">22,273,314</div><div class="l">שברים באורך 4 תאים</div></div>
+    <div><div class="v">25,214</div><div class="l">מתוכם נפוצים באמת</div></div>
+    <div><div class="v">0.11%</div><div class="l">שיעור המעניינים</div></div>
+  </div>
+
+  <p>
+    22 מיליון שברים לא נכנסים לזיכרון של מכונה אחת. אז מפצלים בין מכונות — אבל
+    כדי לספור, כל מכונה צריכה לדעת מה האחרות ראו. <strong>ולשלוח 22 מיליון
+    מחרוזות ברשת זה הדבר היקר ביותר שהפייפליין יכול לעשות.</strong>
+  </p>
+
+  <p>
+    כאן נכנסים שני מבנים שכל הפרויקט עומד עליהם.
+  </p>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">04</span><h2>Count-Min Sketch</h2></div>
+
+  <p class="lede">
+    מחברת שלא נגמרת: לספור מיליוני דברים שונים בטבלה קטנה וקבועה.
+  </p>
+
+  <p>
+    במקום שורה לכל שבר, יש <strong>טבלת מונים</strong>. לכל מפתח יש נוסחה שאומרת
+    תא אחד בכל שורה, ומוסיפים 1 לכולם. הנה טבלה של 3×6 אחרי 23 ספירות:
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>הטבלה כולה — 18 מספרים</b><span>CountMinSketch(width=6, depth=3)</span></div>
+<pre>             0    1    2    3    4    5
+  row 0:     0    4    2    4    3    9
+  row 1:     9    3    5    1    3    1
+  row 2:     1   <b>16</b>    2    1    2    0
+             <span class="dim">      ^ three different keys collided here</span></pre>
+  </div>
+
+  <p>
+    שאילתה: הולכים לשלושת התאים של המפתח ולוקחים את <strong>המינימום</strong>.
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>המינימום מנקה את ההתנגשויות</b><span>estimate = min over rows</span></div>
+<pre>  name        true         cells        counters  estimate
+  Boavista       9     [5, 0, 1]      [9, 9, <b>16</b>]      <span class="ok">   9</span>
+  Ribeira        4     [3, 2, 1]      [4, 5, <b>16</b>]      <span class="ok">   4</span>
+  Campanha       3     [1, 4, 1]      [4, 3, <b>16</b>]      <span class="ok">   3</span>
+  Foz            1     [2, 5, 2]       [2, 1, 2]      <span class="ok">   1</span></pre>
+  </div>
+
+  <p>
+    שורה 2 מזוהמת לגמרי — שלושה שמות חולקים את המונה 16. וכל התשובות עדיין
+    מדויקות, כי המינימום הוא התא הכי פחות מזוהם.
+  </p>
+
+  <div class="key">
+    <span class="tag">הערבות, וזה כל העניין</span>
+    <p>
+      שום דבר בטבלה <strong>אף פעם לא מחסיר</strong>. רק מוסיפים. אז מונה יכול
+      לצאת גדול מדי — אבל פיזית בלתי אפשרי שיצא קטן מדי. לכן
+      <code>estimate &lt; threshold</code> הוא <em>הוכחה</em> שהמפתח נדיר.
+    </p>
+  </div>
+
+  <p>
+    ולמה זה כל כך שימושי? כי משתמשים בזה כדי <strong>לזרוק</strong>. מספר גדול
+    מדי = השארנו משהו מיותר ובזבזנו קצת עבודה. מספר קטן מדי היה זורק תשובה
+    אמיתית. בחרנו מבנה שהטעות שלו עולה זמן, לא אמת.
+  </p>
+
+  <h3>וזה מחזיק גם כשמרעיבים אותו</h3>
+
+  <div class="demo">
+    <div class="demo-label"><b>אותה בדיקה, סקיצה קטנה פי 90</b><span>tools/verify_gate.py --memory-mb 0.01</span></div>
+<pre>                              32 MB sketch    0.04 MB sketch
+  pruned before any shuffle        <b>99.99%</b>            <span class="no">10.05%</span>
+  worst overshoot                       6              <span class="no">1558</span>
+  frequent n-grams found               30                <span class="ok">30</span>
+  frequent ones LOST                    <span class="ok">0</span>                 <span class="ok">0</span></pre>
+  </div>
+
+  <p>
+    הסקיצה המורעבת הרסה את הביצועים והתשובה לא זזה. <strong>סקיצה קטנה עולה
+    במהירות, אף פעם לא בנכונות.</strong>
+  </p>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">05</span><h2>Bloom Filter</h2></div>
+
+  <p class="lede">
+    שורה של נורות: לשאול "האם זה ברשימה?" בלי לשאת את הרשימה.
+  </p>
+
+  <p>
+    אחרי שהסקיצה סיננה, יש קבוצה מדויקת של שברים נפוצים. עכשיו כל worker צריך
+    אותה <em>אצלו בזיכרון</em>, כי משימת map לא ניגשת לרשת. לשלוח מחרוזות עולה
+    עשרות מגה־בייט לכל executor.
+  </p>
+
+  <p>
+    במקום זה: מערך ביטים. כל מפתח מדליק k נורות. שאילתה בודקת אם כולן דולקות.
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>5 שמות, 8 נורות, 2 נורות לשם</b><span>BloomFilter(capacity=3, error_rate=0.4)</span></div>
+<pre>  bulbs:  * * . * * * * .
+
+  <span class="dim">members — must all be True</span>
+  Boavista    [5, 4]   -&gt; <span class="ok">True</span>
+  Ribeira     [1, 0]   -&gt; <span class="ok">True</span>
+  Campanha    [3, 6]   -&gt; <span class="ok">True</span>
+
+  <span class="dim">never added</span>
+  Leca        [2, 1]   [0,1] -&gt; False
+  Matosinhos  [6, 7]   [1,0] -&gt; False
+  Gaia        [4, 3]   [1,1] -&gt; <span class="no">True   &lt;- false positive</span>
+  Valongo     [0, 5]   [1,1] -&gt; <span class="no">True   &lt;- false positive</span>
+
+  6 false positives out of 14   ·   <b>false negatives: 0</b></pre>
+  </div>
+
+  <p>
+    Gaia מעולם לא הוכנס. אבל נורה 4 הודלקה על ידי Boavista ונורה 3 על ידי
+    Campanha, אז שתיהן דולקות במקרה.
+  </p>
+
+  <div class="key">
+    <span class="tag">ושוב אותו עיקרון</span>
+    <p>
+      אם משהו הוכנס, הנורות שלו דולקות בוודאות — <strong>נורה לא נכבית</strong>.
+      אין false negative, זה מבני. הטעות היחידה האפשרית היא מועמד מיותר שנופל
+      בספירה המדויקת הבאה.
+    </p>
+  </div>
+
+  <p style="color:var(--muted);font-size:var(--step--1)">
+    בדוגמה 6 מתוך 14 כי דחסתי 5 שמות ל־8 נורות בכוונה. בפרויקט: 29.5 קילו־בייט
+    ל־25,214 שברים, ושיעור טעות נמדד של 1.00%.
+  </p>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">06</span><h2>השער — איפה זה יושב באשכול</h2></div>
+
+  <p>
+    שני המבנים פותרים שתי בעיות שונות בשני מקומות שונים.
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>מה עובר ברשת ומה לא</b><span>scripts/stage3/gate.py</span></div>
+<pre>   worker 1        worker 2        worker 3
+  ┌──────────┐   ┌──────────┐   ┌──────────┐
+  │ CMS local│   │ CMS local│   │ CMS local│   <span class="dim">no network at all</span>
+  │  3.5 MB  │   │  3.5 MB  │   │  3.5 MB  │
+  └────┬─────┘   └────┬─────┘   └────┬─────┘
+       └── merge ─────┴──── merge ───┘          <span class="dim">treeAggregate</span>
+                     │
+              one sketch, 3.5 MB
+                     │
+        <b>22,273,314 → 25,214 survivors</b>       <span class="dim">99.89% gone</span>
+                     │
+            reduceByKey  <span class="dim">← the only shuffle</span>
+                     │
+        driver builds Bloom → broadcast
+                     │
+  ┌──────────┬──────────┬──────────┐
+  │ 29.5 KB  │ 29.5 KB  │ 29.5 KB  │            <span class="dim">one copy each</span>
+  └──────────┴──────────┴──────────┘</pre>
+  </div>
+
+  <ul>
+    <li><strong>Count-Min חוסך את משלוח הנתונים</strong> — מיזוג סקיצות במקום מיזוג רשימות.</li>
+    <li><strong>Bloom חוסך את משלוח התשובה</strong> — מערך ביטים במקום קבוצת מחרוזות.</li>
+  </ul>
+
+  <p>
+    ו־<code>treeAggregate</code> ולא <code>aggregate</code>: aggregate שולח את
+    הסקיצה של כל partition ישר ל־driver. עם 200 partitions זה 700 מגה־בייט על
+    מכונה אחת. treeAggregate ממזג בזוגות במעלה עץ, וה־driver מקבל אחת.
+  </p>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">07</span><h2>Support ואנטי־מונוטוניות</h2></div>
+
+  <p>
+    <strong>Support = כמה נסיעות עברו במסלול.</strong> מספר אחד. הנה בדיוק מה
+    נחשב:
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>המסלול שנבדק: A → B → C</b><span>corridors.trip_supports</span></div>
+<pre>  <span class="dim">trip      cells                     supports?</span>
+  1         X A B C Y Z                <span class="ok">yes</span>   passed A B C in sequence
+  2         A B C                      <span class="ok">yes</span>   exactly the corridor
+  3         Q A B Q C                  <span class="no"> no</span>   Q in the middle — not contiguous
+  4         A B                        <span class="no"> no</span>   never reached C
+  5         M N A B C                  <span class="ok">yes</span>   passed A B C in sequence
+  6         C B A                      <span class="no"> no</span>   opposite direction
+  7         A B C W A B C              <span class="ok">yes</span>   twice — counted once
+
+  <b>support = 4</b>  <span class="dim">of 7 trips</span></pre>
+  </div>
+
+  <ul>
+    <li>מותר שיהיה לפני ואחרי — נסיעה 1 עברה בקטע, זה מספיק.</li>
+    <li>חייב להיות רצוף — נסיעה 3 ביקרה בתאים אבל לא נסעה במסלול.</li>
+    <li>הכיוון קובע — נסיעה 6 עשתה את אותו רחוב הפוך, זה מסלול אחר.</li>
+    <li>סופרים נסיעות ולא מעברים — אחרת מונית אחת שמסתובבת מנפחת מסלול לבד.</li>
+  </ul>
+
+  <div class="key">
+    <span class="tag">התכונה שמאפשרת את כל הגזימה</span>
+    <p>
+      <strong>אם מאריכים מסלול, ה־support שלו יכול רק לרדת.</strong> כל נסיעה
+      שעברה ב־A B C D בהכרח עברה גם ב־A B C. אז אם שבר נדיר,
+      <em>כל</em> מסלול שמכיל אותו נדיר — ואפשר לזרוק את כולם בלי לבדוק.
+    </p>
+  </div>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">08</span><h2>שיטה א׳ — LSH</h2></div>
+
+  <p class="lede">
+    שתי מוניות שנסעו באותו עורק בשני רחובות חד־סטריים מקבילים מייצרות רצפים
+    <em>דומים אך לא זהים</em>. ספירה מדויקת מפצלת אותן לשתי תבניות חלשות.
+  </p>
+
+  <p>
+    אבל להשוות כל זוג מתוך מיליון קטעים זה 500 מיליארד השוואות. LSH הופך את זה
+    ל־shuffle אחד.
+  </p>
+
+  <h3>שלב 1 — מסלול הופך לקבוצת חתיכות</h3>
+
+  <div class="demo">
+    <div class="demo-label"><b>שלושה מסלולים, והחפיפה ביניהם</b><span>jaccard = |shared| / |total|</span></div>
+<pre>  route 1: Boavista Marques Trindade Aliados SBento  Ribeira
+  route 2: Boavista Marques Trindade Aliados <b>Bolhao</b>  Ribeira
+  route 3: <b>Campanha Bonfim  Heroismo</b> Aliados SBento  Ribeira
+
+  route 1 pieces: Boavista-&gt;Marques, Marques-&gt;Trindade,
+                  Trindade-&gt;Aliados, Aliados-&gt;SBento, SBento-&gt;Ribeira
+
+  1 vs 2:  jaccard 0.429      1 vs 3:  jaccard 0.250</pre>
+  </div>
+
+  <h3>שלב 2 — MinHash, והטריק היפה</h3>
+
+  <p>
+    איך יודעים כמה שתי קבוצות דומות <strong>בלי להשוות אותן</strong>? מערבבים
+    את כל הדברים בעולם בסדר אקראי, ושואלים כל קבוצה: "מי החבר שלך שפגשתי
+    ראשון?"
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>שתי קבוצות שהחפיפה שלהן 0.5</b><span>A = {a,b,c,d,e,f}   B = {a,b,c,d,g,h}</span></div>
+<pre>  shuffle                             min(A)  min(B)   same?
+  ['g','h','c','e','a','d','b','f']        c       g    <span class="no">no</span>
+  ['d','c','h','b','g','a','e','f']        d       d   <span class="ok">YES</span>
+  ['h','e','c','f','b','a','d','g']        e       h    <span class="no">no</span>
+  ['d','f','c','b','h','e','g','a']        d       d   <span class="ok">YES</span>
+  ['b','f','d','h','g','a','e','c']        b       b   <span class="ok">YES</span>
+
+  <span class="dim">over 12 shuffles they agreed 6 times</span>  =  <b>0.500</b>
+  <span class="dim">true jaccard</span>                          =  <b>0.500</b></pre>
+  </div>
+
+  <p>
+    לא מקרה. הן נותנות אותה תשובה <strong>בדיוק כשהדבר הראשון שפגשנו הוא
+    משותף</strong>, וההסתברות לזה היא מספר המשותפים חלקי סך הכל — כלומר ה־Jaccard
+    עצמו. בקוד עושים את זה 32 פעמים, וכל מסלול הופך ל־32 מספרים.
+  </p>
+
+  <h3>שלב 3 — Banding, וכאן נעלמות ההשוואות</h3>
+
+  <div class="demo">
+    <div class="demo-label"><b>חותכים 32 מספרים ל־8 קבוצות של 4, וכל קבוצה היא מפתח דלי</b><span>BANDS=8, ROWS=4</span></div>
+<pre>   band   route 1 key   route 2 key   route 3 key   1&amp;2 meet?
+      0         53527         45347         82316     no
+      1         <b>51841</b>         <b>51841</b>         91307    <span class="ok">YES</span>
+      2         96965         33468         37583     no
+      4         <b>53131</b>         <b>53131</b>         32584    <span class="ok">YES</span>
+      7         65737         40531         54127     no
+
+  routes 1 and 2 share 2 buckets -&gt; <span class="ok">they meet, and get compared</span>
+  route 3 shares none            -&gt; <span class="dim">never even looked at</span></pre>
+  </div>
+
+  <p>
+    אין השוואות. יש <code>groupBy</code> על מפתח הדלי — פעולה אחת ש־Spark עושה
+    מבוזר. ומה שקובע כמה דומים צריך להיות כדי להיפגש הוא הנוסחה
+    <code>P = 1 − (1 − s^4)^8</code>, עקומת S שנשברת סביב 0.595. מדדנו אותה מול
+    התיאוריה — פער מקסימלי <strong>0.027</strong>.
+  </p>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">09</span><h2>שיטה ב׳ — Suffix Array</h2></div>
+
+  <p>
+    השאלה כאן אחרת: <strong>מהו הקטע הרצוף הארוך ביותר שחוזר על עצמו</strong>
+    בין נסיעות שונות?
+  </p>
+
+  <p>
+    הרעיון קלאסי. לוקחים כל סיומת של כל נסיעה, <em>ממיינים אותן</em>, ואז
+    סיומות שמתחילות אותו דבר נוחתות זו לצד זו. חישוב אורך התחילית המשותפת בין
+    שכנות ברשימה הממוינת (מערך LCP) נותן את החזרות.
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>מול מימוש כוח גס על אותו קלט</b><span>tools/verify_methods.py</span></div>
+<pre>  brute force          : 6 patterns, longest is <b>6</b> cells
+  suffix array + LCP   : longest found is <b>6</b> cells      <span class="ok">match</span>
+  200 reported patterns: wrong supports  <b>0</b>              <span class="ok">ok</span></pre>
+  </div>
+
+  <p>
+    הקושי היחיד הוא הפצה: אי אפשר למיין 20 מיליון סיומות על מכונה אחת. אז מחלקים
+    לדליים לפי שני התאים הראשונים — סיומות שמתחילות אחרת לא יכולות לחלוק תחילית,
+    אז <strong>החלוקה לא מאבדת כלום</strong>, וכל דלי ממוין במקביל.
+  </p>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">10</span><h2>שיטה ג׳ — גידול, והמלכודת</h2></div>
+
+  <p>
+    מתחילים משבר נפוץ ומאריכים אותו תא־תא. בכל סיבוב בודקים אילו הרחבות עדיין
+    מספיק פופולריות, ומשליכים את השאר.
+  </p>
+
+  <p>
+    יש כאן קיצור דרך מפתה: אם כל השברים של מסלול נפוצים, קח את המינימום שלהם
+    ותקרא לזה ה־support. חסכת ספירה שלמה. <strong>אנטי־מונוטוניות אפילו מבטיחה
+    שזה חסם עליון.</strong>
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>המקרה ששובר את זה</b><span>מסלול שרוב העיר נוסעת חצי ממנו</span></div>
+<pre>  a 12-cell corridor over 3,000 trips, cut into 10 fragments
+
+  every fragment's support ranges 1,091 to 2,112   <span class="dim">all frequent</span>
+
+  the shortcut's answer (smallest fragment) :  <b>1091</b> trips
+  the truth (corridor re-counted)           :    <b>86</b> trips
+  the shortcut overstates it by             : <span class="no">12.7x</span></pre>
+  </div>
+
+  <p>
+    שליש מהנסיעות עברו בשני השלישים הראשונים, שליש בשני השלישים האחרונים, וכמעט
+    אף אחת לא מקצה לקצה. כל שבר פופולרי, המסלול לא.
+  </p>
+
+  <div class="key">
+    <span class="tag">ולכן</span>
+    <p>
+      אנטי־מונוטוניות מבטיחה שהקיצור הוא חסם עליון — <strong>היא לא מבטיחה שהוא
+      קרוב</strong>. שיטה ג׳ סופרת מחדש בכל סיבוב, ולכן היא גם היחידה שמייצרת
+      מסלולים עם חורים.
+    </p>
+  </div>
+
+  <p style="color:var(--muted);font-size:var(--step--1)">
+    זה בדיוק המנגנון שייצר בגרסה קודמת של הפרויקט "מסלולים באורך 66 ק"מ" ששני
+    הקצוות שלהם במרחק 3.8 ק"מ — לולאות משרשור שברים.
+  </p>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">11</span><h2>מעבר האימות</h2></div>
+
+  <p>
+    כל השיטות מייצרות <em>מועמדים</em>. אף אחת מהן לא מדווחת את המספר של עצמה.
+    2,784 המועמדים נמדדו מחדש מול 100% מהנסיעות — 23 שניות.
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>מה זה תפס</b><span>per-method scorecard, X=0.002%</span></div>
+<pre>  method                corridors   max km   support overstated by
+  cms_growth                  118    18.48                  <span class="ok">0.0%</span>
+  suffix_array_lcp          1,333    12.78                  <span class="ok">0.0%</span>
+  lsh_clustering            1,322     5.70                <span class="no">168.4%</span></pre>
+  </div>
+
+  <p>
+    ה־LSH סופר נסיעות בדליים באמצעות HyperLogLog, וזו הערכה. הוא דיווח שמסלולים
+    פופולריים פי 2.7 ממה שהם. <strong>בלי מעבר האימות כל מספר בדוח היה שגוי,
+    ושום דבר בהמשך לא היה מגלה את זה.</strong>
+  </p>
+
+  <p>ולפני שמסלול מתפרסם הוא עובר שני שומרים גאומטריים:</p>
+
+  <ul>
+    <li><strong>מסלול פשוט</strong> — תא לא מופיע פעמיים.</li>
+    <li><strong>tortuosity ≤ 2.5</strong> — אורך ההליכה חלקי המרחק האווירי.</li>
+  </ul>
+
+  <p style="color:var(--muted);font-size:var(--step--1)">
+    כביש ישר לא מקבל 1.00 אלא כ־1.28: תאי H3 מרצפים קו ישר כזיגזג, אז הליכה
+    ממרכז למרכז ארוכה מהכביש. לכן הסף 2.5 ולא הדוק יותר.
+  </p>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">12</span><h2>מה יצא</h2></div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>סף אורך</th><th class="num">מסלולים</th><th class="num">X שנבחר</th><th>עומד ביעד 100</th></tr></thead>
+      <tbody>
+        <tr><td>≥ 1 ק"מ</td><td class="num">103</td><td class="num">0.1%</td><td class="yes">כן</td></tr>
+        <tr><td>≥ 3 ק"מ</td><td class="num">103</td><td class="num">0.1%</td><td class="yes">כן</td></tr>
+        <tr><td>≥ 5 ק"מ</td><td class="num">491</td><td class="num">0.002%</td><td class="yes">כן</td></tr>
+        <tr><td>≥ 10 ק"מ</td><td class="num">347</td><td class="num">0.002%</td><td class="yes">כן</td></tr>
+        <tr><td>≥ 20 ק"מ</td><td class="num">0</td><td class="num">—</td><td class="nope">לא קיים</td></tr>
+        <tr><td>≥ 40 ק"מ</td><td class="num">0</td><td class="num">—</td><td class="nope">לא קיים</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    שים לב ש־ב־1 ו־3 ק"מ האלגוריתם בחר <strong>סף מחמיר יותר</strong>. הוא לוקח
+    את ה־X הגבוה ביותר שעדיין מניב 100 — לא מוריד סתם.
+  </p>
+
+  <h3>עקומת הפשרה</h3>
+
+  <div class="demo">
+    <div class="demo-label"><b>כמה פופולריות עולה קילומטר</b><span>support_sweep</span></div>
+<pre>  X          trips   corridors   &gt;=5km   &gt;=10km   &gt;=20km
+  0.002%        33       1,404     491      347        0
+  0.05%        802         274      10        8        0
+  0.1%       1,603          72       2        2        0
+  0.2%       3,206           7       0        0        0
+  0.3%       4,808           <b>0</b>       0        0        0</pre>
+  </div>
+
+  <p>
+    <strong>מעל 0.3% אין בפורטו אף תת־מסלול.</strong> אין קטע רחוב שיותר מ־9
+    נסיעות ביום עוברות בו מקצה לקצה. זה ממצא בפני עצמו — התנועה בעיר מפוזרת,
+    לא מרוכזת בעורק אחד.
+  </p>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">13</span><h2>למה 20 ו־40 ק"מ ריקים</h2></div>
+
+  <p>
+    זו התשובה שהכי קל להישמע בה מתחמק, אז היא נבנתה כהוכחה.
+  </p>
+
+  <p>
+    <strong>נסיעה יכולה לעבור מסלול באורך 20 ק"מ רק אם היא עצמה באורך 20 ק"מ.</strong>
+    לכן ה־support של מסלול כזה, מתוך 1.6 מיליון נסיעות, שווה בדיוק ל־support שלו
+    מתוך הנסיעות הארוכות. השאר תורמות אפס — <em>בהגדרה, לא בקירוב</em>.
+  </p>
+
+  <p>
+    17,437 נסיעות כאלה קטן מספיק לבדיקה ממצה: הכל מול הכל, בסף של <strong>שתי
+    נסיעות</strong> — הרצפה המוחלטת, כי אין "משותף" מתחת לשניים.
+  </p>
+
+  <div class="demo">
+    <div class="demo-label"><b>הבדיקה הממצה</b><span>tools/probe_long_corridors.py</span></div>
+<pre>  longest stretch any two long trips share :  <b>26.25 km</b>
+  candidates &gt;= 20 km, shared by &gt;= 2 trips :       108
+  of those, geometrically valid routes     :         <span class="no">0</span>
+  longest VALID route shared by two trips  :  <b>19.91 km</b>
+  anything &gt;= 40 km                        : <span class="no">none, at any threshold</span></pre>
+  </div>
+
+  <p>
+    כל 108 המועמדים הם לולאות — tortuosity של 2.99 עד אינסוף. מונית שנסעה
+    במעגלים צוברת 26 ק"מ בלי להתקדם.
+  </p>
+
+  <h3>ולמה בכלל יש לולאות בנתונים של נסיעות בתשלום</h3>
+
+  <div class="demo">
+    <div class="demo-label"><b>ככל שה"נסיעה" ארוכה, פחות היא נסיעה</b><span>tools/measure_trip_geometry.py</span></div>
+<pre>    trips of     count   median tort.   ends where it began   journeys
+  &gt;=     1 km 1,562,225           1.45           40,010 ( 3%)    <span class="ok">90.8%</span>
+  &gt;=    10 km   189,009           1.63            7,728 ( 4%)    <span class="ok">78.5%</span>
+  &gt;=    20 km    17,437           3.23            1,891 (11%)      39.9%
+  &gt;=    40 km     1,459          <b>19.71</b>              314 (<b>22%</b>)      <span class="no">0.3%</span></pre>
+  </div>
+
+  <p>
+    מתוך 1,459 "נסיעות" מעל 40 ק"מ, <strong>ארבע</strong> הן מסלול אמיתי. השאר
+    משוטטות וחוזרות — 22% מסתיימות ב־500 מטר מנקודת ההתחלה אחרי שעה וחצי בחציון.
+  </p>
+
+  <div class="key">
+    <span class="tag">מה קרה שם</span>
+    <p>
+      הנהג לא נסע בסיבובים. <strong>המונה לא כובה.</strong> הוא סיים נסיעה,
+      המשיך לנסוע — ריק ואז עם נוסעים אחרים — וכל אחר הצהריים נרשם כנסיעה אחת.
+    </p>
+  </div>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">14</span><h2>איך יודעים שכל זה נכון</h2></div>
+
+  <p>
+    כל רכיב הושווה מול <strong>מימוש עצמאי</strong>, לא נבדק בעין.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>כלי</th><th>מה הוא עושה</th><th>מה יצא</th></tr></thead>
+      <tbody>
+        <tr><td><code>verify_stage1</code></td><td>CSV שכל נסיעה בו מפעילה כלל אחד בדיוק</td><td class="yes">10 מ־10 ירו פעם אחת</td></tr>
+        <tr><td><code>verify_stage2</code></td><td>הרצף נבנה מחדש מהקואורדינטות ומושווה תא־תא</td><td class="yes">התאמה מלאה</td></tr>
+        <tr><td><code>verify_gate</code></td><td>הקבוצה הנפוצה מחושבת פעמיים, עם שער ובלעדיו</td><td class="yes">אפס אבדו</td></tr>
+        <tr><td><code>verify_methods</code></td><td>עקומת ה־S מול הנוסחה, וקיצור הדרך של השרשור</td><td class="yes">פער 0.027</td></tr>
+        <tr><td><code>verify_corridors</code></td><td><code>trip_supports</code> מול מימוש ממצה איטי</td><td class="nope">תפס באג: 1 מ־60</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    השורה האחרונה היא הנקודה. הבדיקה מצאה שהקוד היה <em>חמדני</em>: הוא לקח את
+    המופע הראשון של כל קטע, וזה יכול לדחוף את הקטע הבא מחוץ לטווח החור כשמופע
+    מאוחר יותר היה נשאר בפנים. דיווח בחסר, בערך נסיעה תומכת אחת מכל 60. מעולם לא
+    היינו רואים את זה בקריאת קוד.
+  </p>
+</section>
+
+<section class="flow">
+  <div class="stage-head"><span class="stage-num">15</span><h2>מה היינו עושים אחרת</h2></div>
+
+  <ul>
+    <li>
+      <strong>כלל tortuosity בשלב 1.</strong> מתוך 1,459 נסיעות מעל 40 ק"מ רק
+      ארבע אמיתיות. התוצאות לא נפגעו כי שלב 3 פוסל צורות כאלה ממילא, אבל תקרת
+      האורך שדיווחנו לצידן הייתה אופטימית.
+    </li>
+    <li>
+      <strong>חלון גדול יותר ל־LSH.</strong> 12 תאים חוסמים אותו מבנית סביב
+      5 ק"מ, אז הוא לעולם לא יתרום מסלול ארוך.
+    </li>
+    <li>
+      <strong>בדיקות לגלאי החריגות.</strong> לשלב 3 יש חמישה כלי אימות,
+      ל־<code>anomalies.py</code> אין אף אחד — ושם התגלה בסוף באג בדירוג.
+    </li>
+  </ul>
+
+  <div class="key">
+    <span class="tag">והדבר שכדאי להגיד ראשון</span>
+    <p>
+      אלה מסדרונות <strong>ביקוש</strong>, לא מסדרונות תנועה. כל שורה בדאטהסט
+      היא נסיעה בתשלום, והנסיעה הריקה בין הזמנות לא מתועדת — מדדנו שבחציון
+      המונית "קופצת" 1.72 ק"מ בין סוף נסיעה לתחילת הבאה. כביש שמוניות נוסעות בו
+      ריקות כל היום בלתי נראה לנו.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <p>
+    כל מספר בדף נלקח מקבצי התוצאות ומכלי המדידה בריפו. ההדגמות הן פלט אמיתי של
+    הרצות — לא דוגמאות שהומצאו להמחשה.
+  </p>
+</footer>
+
+</div>
