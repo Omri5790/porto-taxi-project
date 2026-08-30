@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 
 import folium
 from folium.plugins import GroupedLayerControl
@@ -45,7 +46,25 @@ def add_routes(group, routes, max_routes=100):
                             fill=True, fill_opacity=1, tooltip=tip).add_to(group)
 
 
-def build(results_path: str, out_path: str) -> None:
+def add_probe_corridors(group, corridors, max_routes=100):
+    """Draw the >= 20 km corridors that exist below the mining floor.
+
+    Dashed and grey throughout, and labelled with their real support, because
+    they are not pipeline output and are not popular: the best of them is
+    shared by three trips against a floor of thirty-three.  Drawing them in the
+    same colours as the mined corridors would be the whole lie in one picture.
+    """
+    for r in corridors[:max_routes]:
+        tip = (f"{r['length_km']:.2f} km &middot; "
+               f"<b>{r['support_trips']} trips only</b> "
+               f"({r['support_pct']:.5f}%) &middot; {r['n_cells']} cells "
+               f"&middot; below the mining floor of 33")
+        pts = [(p["lat"], p["lng"]) for p in r["coordinates"]]
+        folium.PolyLine(pts, color="#5a6b75", weight=2.5, opacity=0.55,
+                        dash_array="4,6", tooltip=tip).add_to(group)
+
+
+def build(results_path: str, out_path: str, probe_path: str = None) -> None:
     with open(results_path, encoding="utf-8") as fh:
         data = json.load(fh)
 
@@ -62,6 +81,17 @@ def build(results_path: str, out_path: str) -> None:
                  f"(X = {bucket['support_pct_used']}%)")
         fg = folium.FeatureGroup(name=label, show=(key == "1"))
         add_routes(fg, bucket["routes"])
+        fg.add_to(m)
+        groups.append(fg)
+
+    if probe_path and os.path.exists(probe_path):
+        with open(probe_path, encoding="utf-8") as fh:
+            probe = json.load(fh)
+        label = (f"&ge; 20 km &mdash; {probe['distinct_valid_found']} exist, "
+                 f"max support {probe['max_support_trips']} trips "
+                 f"(<b>below the floor</b>)")
+        fg = folium.FeatureGroup(name=label, show=False)
+        add_probe_corridors(fg, probe["corridors"])
         fg.add_to(m)
         groups.append(fg)
 
@@ -102,5 +132,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--results", default="output/stage3_subroutes.json")
     ap.add_argument("--out", default="output/stage3_subroutes_map.html")
+    ap.add_argument("--probe", default="output/long_corridors_probe.json",
+                    help="corridors found below the mining floor; drawn dashed and grey")
     a = ap.parse_args()
-    build(a.results, a.out)
+    build(a.results, a.out, a.probe)

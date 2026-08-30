@@ -98,32 +98,66 @@ the trajectories cover a taxi's whole day.
 It also bounds what "popular" can mean: support counts paid journeys along a
 stretch, out of 440 taxis, not vehicles on a road.
 
-### The long trips are mostly not journeys
+### Long trips, and what the bounding box was hiding
 
 A follow-on question — why would a driver go in circles, when every row is a
-paid fare? — turned into a finding. `tools/measure_trip_geometry.py` compares
-each trip's walked path against the straight line from its start to its end:
+paid fare? — turned into a finding, and then the finding turned over.
+
+`tools/measure_trip_geometry.py` compares each trip's walked path against the
+straight line from its start to its end. Measured on the current cleaning:
 
 | trips of | count | median tortuosity | end where they began | journeys |
 |:---|---:|---:|---:|---:|
-| ≥ 1 km | 1,562,225 | 1.45 | 3% | **90.8%** |
-| ≥ 10 km | 189,009 | 1.63 | 4% | **78.5%** |
-| ≥ 20 km | 17,437 | 3.23 | 11% | **39.9%** |
-| ≥ 40 km | 1,459 | 19.71 | 22% | **0.3%** |
+| ≥ 1 km | 1,574,154 | 1.45 | 3% | **90.8%** |
+| ≥ 5 km | 607,096 | 1.53 | 3% | **86.5%** |
+| ≥ 10 km | 200,530 | 1.61 | 4% | **79.8%** |
+| ≥ 20 km | 25,223 | 2.01 | 7% | **58.6%** |
+| ≥ 40 km | 3,509 | 1.61 | 7% | **61.8%** |
 
-The longer a "trip" is, the less it looks like a journey. Of the 1,459 trips of
-40 km or more, **four** walk a path within 2.5× their straight-line displacement.
-The rest wander and come back — 22% end within 500 m of where they started,
-after tens of kilometres, over a median of 1.6 hours. Those are not fares; they
-are meters that were never stopped, with a whole afternoon of driving recorded
-as one journey.
+An earlier version of this table, taken before the bounding-box rule was
+separated into `REGION_BBOX` and `PORTO_BBOX`, reported a median tortuosity of
+**19.71** at ≥ 40 km and concluded that essentially every long trip was a meter
+left running. That conclusion was an artefact of the bug it was measured
+through. The old rule discarded any trip with a point outside the Porto study
+area, which is precisely what a genuine journey to Braga or Aveiro looks like —
+so the long-trip population it left behind consisted almost entirely of taxis
+circling inside the city. Fixing the rule raised the ≥ 40 km population from
+1,459 to 3,509 and dropped the median tortuosity from 19.71 to 1.61.
 
-This is a gap in **Stage 1**, not Stage 3: the cleaning rules cap distance at
-100 km and duration at 24 hours, and a wandering 40 km trip passes both. A
-tortuosity rule would remove them. The published corridors are unaffected —
-they already refuse shapes like that — but the `length_ceiling` reported
-alongside them is optimistic by exactly this margin, and the honest ceiling at
-40 km is four trips rather than 460.
+The wandering trips are still there — 7% of long trips end within 500 m of
+where they started — and a tortuosity rule in Stage 1 would remove them. But
+they are a minority, not the population, and the reason the long configurations
+come back empty is not that the long trips are junk.
+
+### Why ≥ 20 km and ≥ 40 km are empty
+
+`tools/probe_long_corridors.py` settles this by exhaustion rather than by
+argument. A trip can only traverse a corridor of length L if the trip is itself
+at least L long, so the support of a 20 km corridor over all 1.6M trips is
+*exactly* its support over the 25,223 trips that are themselves ≥ 20 km. That
+set is small enough to mine on one machine at a support of **two trips**, which
+is as low as the word "shared" can go.
+
+| | result |
+|:---|:---|
+| longest stretch any two long trips share | **26.93 km** |
+| distinct valid corridors ≥ 20 km | **125** |
+| best support among them | **3 trips** (0.0002%) |
+| candidates ≥ 40 km, at a support of two | **0** |
+
+So the two answers are different, and only one of them is a limitation:
+
+- **≥ 20 km corridors exist.** 125 of them, verified as simple paths within
+  2.5× their straight-line displacement, the longest 26.93 km. None is shared
+  by more than **three** trips, against a mining floor of 33. Stage 3 reports
+  none because none is *popular*, which is the question the brief asked.
+  `tools/export_long_corridors.py` writes 100 of them to
+  `output/long_corridors_probe.json`, kept in a separate file with
+  `support_trips` on every record, so they are never mistaken for mined output.
+- **≥ 40 km corridors do not exist.** Not below the floor, not at any
+  threshold: no two trips in the dataset share 40 contiguous kilometres. That
+  is a fact about Porto — the region is roughly 30 km across, and two taxis
+  that both drive 40 km do so on different errands.
 
 ## Stage 2 — spatial encoding
 

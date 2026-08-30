@@ -1,11 +1,13 @@
 {
   "summary": {
     "raw_trips_read": 1710670,
-    "final_clean_trips": 1602542,
-    "removed_trips": 108128,
-    "removed_pct": 6.3208,
+    "final_clean_trips": 1616575,
+    "removed_trips": 94095,
+    "removed_pct": 5.5005,
     "unique_taxis": 440,
-    "mean_points_kept_after_dedup": 0.9903
+    "mean_points_kept_after_dedup": 0.9902,
+    "kept_trips_leaving_study_area": 16395,
+    "kept_trips_leaving_study_area_pct": 1.0142
   },
   "per_rule_removed": {
     "missing_data": {
@@ -34,29 +36,29 @@
       "pct_of_raw": 0.0
     },
     "out_of_bbox": {
-      "label": "5. a GPS point outside the Porto bounding box",
-      "trips": 16716,
-      "pct_of_raw": 0.9772
+      "label": "5. a GPS point outside the wider region (satellite error)",
+      "trips": 321,
+      "pct_of_raw": 0.0188
     },
     "gps_jump": {
       "label": "6. jump implying over 200 km/h (satellite error)",
-      "trips": 36483,
-      "pct_of_raw": 2.1327
+      "trips": 38092,
+      "pct_of_raw": 2.2267
     },
     "stationary": {
       "label": "7. under 2 distinct points after deduplication",
-      "trips": 203,
-      "pct_of_raw": 0.0119
+      "trips": 207,
+      "pct_of_raw": 0.0121
     },
     "too_short_distance": {
       "label": "8. shorter than 0.2 km (not a journey)",
-      "trips": 18201,
-      "pct_of_raw": 1.064
+      "trips": 18310,
+      "pct_of_raw": 1.0703
     },
     "too_long_distance": {
       "label": "9. longer than 100.0 km (implausible for this city)",
-      "trips": 7,
-      "pct_of_raw": 0.0004
+      "trips": 647,
+      "pct_of_raw": 0.0378
     }
   },
   "thresholds": {
@@ -66,6 +68,12 @@
       "min_lat": 41.05,
       "max_lat": 41.25
     },
+    "region_bbox": {
+      "min_lng": -9.75,
+      "max_lng": -7.45,
+      "min_lat": 40.05,
+      "max_lat": 42.25
+    },
     "min_points": 2,
     "max_duration_sec": 86400,
     "max_jump_km": 0.8333,
@@ -73,27 +81,28 @@
     "max_trip_km": 100.0
   },
   "distance_percentiles_km": {
-    "p1": 0.671,
-    "p25": 2.4766,
-    "p50": 3.9805,
-    "p75": 6.4821,
-    "p90": 10.7478,
-    "p95": 13.8402,
-    "p99": 19.8723
+    "p1": 0.669,
+    "p25": 2.487,
+    "p50": 4.0097,
+    "p75": 6.5819,
+    "p90": 11.1173,
+    "p95": 14.6142,
+    "p99": 22.5381
   },
   "duration_percentiles_sec": {
     "p1": 135.0,
     "p25": 420.0,
     "p50": 615.0,
-    "p75": 870.0,
-    "p90": 1185.0,
-    "p95": 1485.0,
-    "p99": 2535.0
+    "p75": 885.0,
+    "p90": 1215.0,
+    "p95": 1530.0,
+    "p99": 2730.0
   },
-  "max_distance_km": 99.2204,
+  "max_distance_km": 99.9724,
   "notes": {
     "duration": "derived from the ORIGINAL sample count: (n_raw - 1) * 15 s. Deduplication removes stationary points but not the time they represent.",
-    "quantiles": "approxQuantile with relativeError=1e-4."
+    "quantiles": "approxQuantile with relativeError=1e-4.",
+    "bounding_box": "Validity is judged against region_bbox. porto_bbox is the study area; trips leaving it are kept and counted as kept_trips_leaving_study_area. Judging validity against the study area removed 16,716 trips of median length 16 km -- journeys to neighbouring towns, not satellite errors."
   },
-  "generated_utc": "2026-08-29T12:50:30.463937+00:00"
+  "generated_utc": "2026-08-30T12:39:17.722765+00:00"
 }
