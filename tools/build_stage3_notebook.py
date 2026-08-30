@@ -61,7 +61,7 @@ cluster was deleted.
 """))
 
 CELLS.append(code('''# Either a gs:// prefix from the cluster run, or a local directory.
-RESULTS = os.environ.get("STAGE3_RESULTS", "gs://porto-taxi-project-bf990986/results/stage3/latest")
+RESULTS = os.environ.get("STAGE3_RESULTS", "__RESULTS_DEFAULT__")
 
 def load(name):
     path = f"{RESULTS.rstrip('/')}/{name}"
@@ -306,9 +306,11 @@ print("  PASSED - no loops, lengths reproduce, no constant columns" if not probl
       else "  FAILED:\\n    " + "\\n    ".join(problems[:20]))'''))
 
 
-def build(out_path: str) -> None:
+def build(out_path: str, results_default: str) -> None:
+    cells = json.loads(
+        json.dumps(CELLS).replace("__RESULTS_DEFAULT__", results_default))
     nb = {
-        "cells": CELLS,
+        "cells": cells,
         "metadata": {
             "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
             "language_info": {"name": "python", "version": "3.10"},
@@ -319,10 +321,19 @@ def build(out_path: str) -> None:
     }
     with open(out_path, "w", encoding="utf-8") as fh:
         json.dump(nb, fh, indent=1, ensure_ascii=False)
-    print(f"wrote {out_path} ({len(CELLS)} cells)")
+    print(f"wrote {out_path} ({len(cells)} cells), reading results from "
+          f"{results_default}")
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="notebooks/stage3_colab_enterprise.ipynb")
-    build(ap.parse_args().out)
+    # The notebook has to open in Colab Enterprise and run top to bottom without
+    # anyone editing a path first.  It previously defaulted to a bucket prefix
+    # that was never written ("results/stage3/latest"), so the first data cell
+    # raised NotFound and the demo the brief asks for did not exist.  Pass the
+    # run this notebook is describing.
+    ap.add_argument("--results", required=True,
+                    help="gs:// prefix or local dir holding stage3_subroutes.json")
+    args = ap.parse_args()
+    build(args.out, args.results)

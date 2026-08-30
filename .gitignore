@@ -27,3 +27,6 @@ env/
 .DS_Store
 .vscode/
 .idea/
+
+# Moodle submission archive, rebuilt on demand
+porto-moodle-submission.zip
