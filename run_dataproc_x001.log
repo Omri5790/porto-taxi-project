@@ -1,0 +1,268 @@
+==============================================================
+  Porto pipeline on Dataproc
+  project : project-bf990986-f458-4b39-926          region: europe-west1
+  cluster : porto-pipeline  (1 master + 5 workers x e2-standard-2)
+  stages  : 3
+  results : gs://porto-taxi-project-bf990986/results/20260829T141516Z
+==============================================================
+
+[1/5] packaging code...
+Copying file:///var/folders/0k/jwsfmt5d0x79q9q8jv0fqmzm0000gn/T/tmp.OjewVrrmoC/code.zip to gs://porto-taxi-project-bf990986/code/code-20260829T141516Z.zip
+  
+........
+Copying file://scripts/stage1_data_preparation.py to gs://porto-taxi-project-bf990986/code/20260829T141516Z-stage1_data_preparation.py
+  
+.......
+Copying file://scripts/stage2_spatial_encoding.py to gs://porto-taxi-project-bf990986/code/20260829T141516Z-stage2_spatial_encoding.py
+  
+......
+Copying file://scripts/stage3/run_stage3.py to gs://porto-taxi-project-bf990986/code/20260829T141516Z-run_stage3.py
+  
+......
+      uploaded
+
+[2/5] cluster...
+Waiting on operation [projects/project-bf990986-f458-4b39-926/regions/europe-west1/operations/74ed69df-dc84-323d-b9c2-1481cfd574d4].
+Waiting for cluster creation operation...
+WARNING: Consider using Auto Zone rather than selecting a zone manually. See https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/auto-zone
+WARNING: Failed to validate permissions required for default service account: '212659012096-compute@developer.gserviceaccount.com'. Cluster creation could still be successful if required permissions have been granted to the respective service accounts as mentioned in the document https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/service-accounts#dataproc_service_accounts_2. This could be due to Cloud Resource Manager API hasn't been enabled in your project '212659012096' before or it is disabled. Enable it by visiting 'https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/overview?project=212659012096'.
+WARNING: For PD-Standard without local SSDs, we strongly recommend provisioning 1TB or larger to ensure consistently high I/O performance. See https://cloud.google.com/compute/docs/disks/performance for information on disk I/O performance.
+WARNING: The firewall rules for specified network or subnetwork would allow ingress traffic from 0.0.0.0/0, which could be a security risk.
+...................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................done.
+Created [https://dataproc.googleapis.com/v1/projects/project-bf990986-f458-4b39-926/regions/europe-west1/clusters/porto-pipeline] Cluster placed in zone [europe-west1-c].
+      created (6 nodes)
+
+[3/5] running stages...
+
+      submitting stage3...
+Job [stage3-20260829T141516Z] submitted.
+Waiting for job output...
+26/08/29 14:20:42 INFO SparkEnv: Registering MapOutputTracker
+26/08/29 14:20:42 INFO SparkEnv: Registering BlockManagerMaster
+26/08/29 14:20:42 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+26/08/29 14:20:42 INFO SparkEnv: Registering OutputCommitCoordinator
+26/08/29 14:20:45 INFO DataprocSparkPlugin: Registered 128 driver metrics
+26/08/29 14:20:48 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.46:8032
+26/08/29 14:20:49 INFO AHSProxy: Connecting to Application History server at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.46:10200
+26/08/29 14:20:52 INFO Configuration: resource-types.xml not found
+26/08/29 14:20:52 INFO ResourceUtils: Unable to find 'resource-types.xml'.
+26/08/29 14:20:57 INFO YarnClientImpl: Submitted application application_1788013113421_0001
+26/08/29 14:20:58 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal./10.132.0.46:8030
+26/08/29 14:21:02 INFO GhfsStorageStatistics: Detected potential high latency for operation op_get_file_status. latencyMs=1152; previousMaxLatencyMs=0; operationCount=1; context=gs://dataproc-temp-europe-west1-212659012096-77fhpvt8/f19de400-6cbe-40df-b64a-2e2028a60661/spark-job-history
+26/08/29 14:21:02 INFO GoogleCloudStorageImpl: Ignoring exception of type GoogleJsonResponseException; verified object already exists with desired state.
+==========================================================================
+  Stage 3 - Popular Long Sub-Route Discovery
+  input   : gs://porto-taxi-project-bf990986/data/h3_encoded_trips.parquet
+  output  : gs://porto-taxi-project-bf990986/results/20260829T141516Z
+  support : 0.01% (mining floor; sweep derived from it)
+==========================================================================
+
+Loaded 1,602,542 trips (cells from h3_res9).
+Mining floor: 161 trips = 0.01%
+
+Upper bound on support, from the trip-length distribution alone:
+  a corridor of >=    1 km can be supported by at most 1,560,203 trips (97.3580%)
+  a corridor of >=    3 km can be supported by at most 1,047,535 trips (65.3671%)
+  a corridor of >=    5 km can be supported by at most   593,371 trips (37.0269%)
+  a corridor of >=   10 km can be supported by at most   187,002 trips (11.6691%)
+  a corridor of >=   20 km can be supported by at most    15,693 trips (0.9793%)
+  a corridor of >=   40 km can be supported by at most       460 trips (0.0287%)
+
+[gate] Count-Min pre-filter + Bloom over frequent 4-grams
+  streamed 22,273,314 n-grams, 99.9509% pruned before the shuffle, 10,936 frequent
+
+[A] MinHash + LSH clustering
+  3,210 cluster representatives in 780.1s
+
+[B] Distributed generalised suffix array + LCP
+  5,131 repeats in 358.5s (6.698% of suffixes pruned by the Bloom gate)
+
+[C] Count-Min pruned level-wise growth (support verified each round)
+    round  1: frontier   560 ->   252 (from  34274 verified extensions), maximal     0
+    round  2: frontier   252 ->   251 (from  13567 verified extensions), maximal     0
+    round  3: frontier   251 ->   248 (from  10959 verified extensions), maximal     2
+    round  4: frontier   248 ->   242 (from   9361 verified extensions), maximal     5
+    round  5: frontier   242 ->   159 (from   7677 verified extensions), maximal    12
+    round  6: frontier   159 ->   150 (from   4282 verified extensions), maximal    20
+    round  7: frontier   150 ->   140 (from   3440 verified extensions), maximal    30
+    round  8: frontier   140 ->   125 (from   2742 verified extensions), maximal    45
+    round  9: frontier   125 ->    96 (from   2189 verified extensions), maximal    55
+    round 10: frontier    96 ->    84 (from   1356 verified extensions), maximal    67
+    round 11: frontier    84 ->    75 (from    957 verified extensions), maximal    76
+    round 12: frontier    75 ->    58 (from    655 verified extensions), maximal    93
+    round 13: frontier    58 ->    38 (from    473 verified extensions), maximal   102
+    round 14: frontier    38 ->    33 (from    268 verified extensions), maximal   107
+    round 15: frontier    33 ->    21 (from    182 verified extensions), maximal   119
+    round 16: frontier    21 ->    15 (from    149 verified extensions), maximal   125
+    round 17: frontier    15 ->     9 (from    115 verified extensions), maximal   129
+    round 18: frontier     9 ->     7 (from     65 verified extensions), maximal   131
+    round 19: frontier     7 ->     7 (from     39 verified extensions), maximal   131
+    round 20: frontier     7 ->     4 (from     25 verified extensions), maximal   134
+    round 21: frontier     4 ->     2 (from     10 verified extensions), maximal   136
+    round 22: frontier     2 ->     2 (from      5 verified extensions), maximal   136
+    round 23: frontier     2 ->     1 (from      1 verified extensions), maximal   137
+    round 24: frontier     1 ->     0 (from      0 verified extensions), maximal   138
+  138 maximal corridors in 2072.7s
+
+[merge] 8,479 raw candidates from all methods
+  8,475 pass the simple-path, tortuosity and min-8-cell gates
+  2,800 kept for verification (<= 1,333 per method)
+
+[verify] exact support over 100% of trips
+  2,800 corridors verified in 25.2s
+
+  per-method (verified):
+    cms_growth             134 corridors, max  18.12 km, mean  6.68 km, support overstated by 0.0%
+    lsh_clustering        1222 corridors, max   5.42 km, mean  4.14 km, support overstated by 154.8%
+    suffix_array_lcp      1333 corridors, max  11.29 km, mean  8.06 km, support overstated by 0.0%
+
+  2,689 verified -> 1,170 after removing contained corridors
+  >=    1 km :  274 corridors (at X = 0.05%)
+  >=    3 km :  274 corridors (at X = 0.05%)
+  >=    5 km :  335 corridors (at X = 0.01%)
+  >=   10 km :   29 corridors (at X = 0.01%)   [below target]
+  >=   20 km :    0 corridors (at X = 0.01%)   [below target]
+  >=   40 km :    0 corridors (at X = 0.01%)   [below target]
+
+[anomalies] Bloom transition novelty + HyperLogLog taxi diversity
+26/08/29 15:26:23 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_8_1 !
+26/08/29 15:26:23 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_8_9 !
+26/08/29 15:26:23 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_10_9 !
+26/08/29 15:26:23 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_10_1 !
+26/08/29 15:26:25 WARN YarnAllocator: Container from a bad node: container_1788013113421_0001_01_000002 on host: porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:24.524]Container killed on request. Exit code is 143
+[2026-08-29 15:26:24.531]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:24.534]Killed by external signal
+.
+26/08/29 15:26:25 ERROR YarnScheduler: Lost executor 2 on porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal: Container from a bad node: container_1788013113421_0001_01_000002 on host: porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:24.524]Container killed on request. Exit code is 143
+[2026-08-29 15:26:24.531]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:24.534]Killed by external signal
+.
+26/08/29 15:26:25 WARN YarnSchedulerBackend$YarnSchedulerEndpoint: Requesting driver to remove executor 2 for reason Container from a bad node: container_1788013113421_0001_01_000002 on host: porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:24.524]Container killed on request. Exit code is 143
+[2026-08-29 15:26:24.531]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:24.534]Killed by external signal
+.
+26/08/29 15:26:25 WARN TaskSetManager: Lost task 1.0 in stage 119.0 (TID 1068) (porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal executor 2): ExecutorLostFailure (executor 2 exited caused by one of the running tasks) Reason: Container from a bad node: container_1788013113421_0001_01_000002 on host: porto-pipeline-w-3.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:24.524]Container killed on request. Exit code is 143
+[2026-08-29 15:26:24.531]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:24.534]Killed by external signal
+.
+26/08/29 15:26:26 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_8_5 !
+26/08/29 15:26:26 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_10_5 !
+26/08/29 15:26:27 WARN YarnAllocator: Container from a bad node: container_1788013113421_0001_01_000006 on host: porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:27.037]Container killed on request. Exit code is 143
+[2026-08-29 15:26:27.041]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:27.044]Killed by external signal
+.
+26/08/29 15:26:27 ERROR YarnScheduler: Lost executor 6 on porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal: Container from a bad node: container_1788013113421_0001_01_000006 on host: porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:27.037]Container killed on request. Exit code is 143
+[2026-08-29 15:26:27.041]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:27.044]Killed by external signal
+.
+26/08/29 15:26:27 WARN YarnSchedulerBackend$YarnSchedulerEndpoint: Requesting driver to remove executor 6 for reason Container from a bad node: container_1788013113421_0001_01_000006 on host: porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:27.037]Container killed on request. Exit code is 143
+[2026-08-29 15:26:27.041]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:27.044]Killed by external signal
+.
+26/08/29 15:26:27 WARN TaskSetManager: Lost task 5.0 in stage 119.0 (TID 1067) (porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal executor 6): ExecutorLostFailure (executor 6 exited caused by one of the running tasks) Reason: Container from a bad node: container_1788013113421_0001_01_000006 on host: porto-pipeline-w-4.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:27.037]Container killed on request. Exit code is 143
+[2026-08-29 15:26:27.041]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:27.044]Killed by external signal
+.
+26/08/29 15:26:32 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_10_8 !
+26/08/29 15:26:32 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_8_8 !
+26/08/29 15:26:32 WARN YarnAllocator: Container from a bad node: container_1788013113421_0001_01_000005 on host: porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:32.770]Container killed on request. Exit code is 143
+[2026-08-29 15:26:32.776]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:32.779]Killed by external signal
+.
+26/08/29 15:26:32 ERROR YarnScheduler: Lost executor 5 on porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal: Container from a bad node: container_1788013113421_0001_01_000005 on host: porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:32.770]Container killed on request. Exit code is 143
+[2026-08-29 15:26:32.776]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:32.779]Killed by external signal
+.
+26/08/29 15:26:32 WARN YarnSchedulerBackend$YarnSchedulerEndpoint: Requesting driver to remove executor 5 for reason Container from a bad node: container_1788013113421_0001_01_000005 on host: porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:32.770]Container killed on request. Exit code is 143
+[2026-08-29 15:26:32.776]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:32.779]Killed by external signal
+.
+26/08/29 15:26:32 WARN TaskSetManager: Lost task 8.0 in stage 119.0 (TID 1073) (porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal executor 5): ExecutorLostFailure (executor 5 exited caused by one of the running tasks) Reason: Container from a bad node: container_1788013113421_0001_01_000005 on host: porto-pipeline-w-2.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:32.770]Container killed on request. Exit code is 143
+[2026-08-29 15:26:32.776]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:32.779]Killed by external signal
+.
+26/08/29 15:26:58 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_10_2 !
+26/08/29 15:26:58 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_8_2 !
+26/08/29 15:26:58 WARN BlockManagerMasterEndpoint: No more replicas available for rdd_10_4 !
+26/08/29 15:26:59 WARN YarnAllocator: Container from a bad node: container_1788013113421_0001_01_000003 on host: porto-pipeline-w-0.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:59.233]Container killed on request. Exit code is 143
+[2026-08-29 15:26:59.240]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:59.247]Killed by external signal
+.
+26/08/29 15:26:59 WARN YarnSchedulerBackend$YarnSchedulerEndpoint: Requesting driver to remove executor 3 for reason Container from a bad node: container_1788013113421_0001_01_000003 on host: porto-pipeline-w-0.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:59.233]Container killed on request. Exit code is 143
+[2026-08-29 15:26:59.240]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:59.247]Killed by external signal
+.
+26/08/29 15:26:59 ERROR YarnScheduler: Lost executor 3 on porto-pipeline-w-0.europe-west1-c.c.project-bf990986-f458-4b39-926.internal: Container from a bad node: container_1788013113421_0001_01_000003 on host: porto-pipeline-w-0.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:59.233]Container killed on request. Exit code is 143
+[2026-08-29 15:26:59.240]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:59.247]Killed by external signal
+.
+26/08/29 15:26:59 WARN TaskSetManager: Lost task 2.0 in stage 119.0 (TID 1072) (porto-pipeline-w-0.europe-west1-c.c.project-bf990986-f458-4b39-926.internal executor 3): ExecutorLostFailure (executor 3 exited caused by one of the running tasks) Reason: Container from a bad node: container_1788013113421_0001_01_000003 on host: porto-pipeline-w-0.europe-west1-c.c.project-bf990986-f458-4b39-926.internal. Exit status: 143. Diagnostics: [2026-08-29 15:26:59.233]Container killed on request. Exit code is 143
+[2026-08-29 15:26:59.240]Container exited with a non-zero exit code 143. 
+[2026-08-29 15:26:59.247]Killed by external signal
+.
+  scored 1,342,107 trips in 106.0s
+
+Wrote results to gs://porto-taxi-project-bf990986/results/20260829T141516Z
+Total runtime 4455.0s
+Job [stage3-20260829T141516Z] finished successfully.
+done: true
+driverControlFilesUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/f19de400-6cbe-40df-b64a-2e2028a60661/jobs/stage3-20260829T141516Z/
+driverOutputResourceUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/f19de400-6cbe-40df-b64a-2e2028a60661/jobs/stage3-20260829T141516Z/driveroutput
+jobUuid: abb67ef7-00ac-355c-9359-19e35db8ebad
+placement:
+  clusterName: porto-pipeline
+  clusterUuid: f19de400-6cbe-40df-b64a-2e2028a60661
+pysparkJob:
+  args:
+  - --input_path=gs://porto-taxi-project-bf990986/data/h3_encoded_trips.parquet
+  - --output_dir=gs://porto-taxi-project-bf990986/results/20260829T141516Z
+  - --support_pct=0.01
+  mainPythonFileUri: gs://porto-taxi-project-bf990986/code/20260829T141516Z-run_stage3.py
+  pythonFileUris:
+  - gs://porto-taxi-project-bf990986/code/code-20260829T141516Z.zip
+reference:
+  jobId: stage3-20260829T141516Z
+  projectId: project-bf990986-f458-4b39-926
+status:
+  state: DONE
+  stateStartTime: '2026-08-29T15:34:58.173977Z'
+statusHistory:
+- state: PENDING
+  stateStartTime: '2026-08-29T14:20:22.680080Z'
+- state: SETUP_DONE
+  stateStartTime: '2026-08-29T14:20:22.764380Z'
+- details: Agent reported job success
+  state: RUNNING
+  stateStartTime: '2026-08-29T14:20:23.403054Z'
+yarnApplications:
+- memoryMbSeconds: '144043122'
+  name: Stage3_SubRouteDiscovery
+  progress: 1.0
+  state: FINISHED
+  trackingUrl: http://porto-pipeline-m.europe-west1-c.c.project-bf990986-f458-4b39-926.internal.:8088/proxy/application_1788013113421_0001/
+  vcoreSeconds: '43947'
+      stage3 finished in 4481s
+
+[4/5] writing provenance...
+Copying file:///var/folders/0k/jwsfmt5d0x79q9q8jv0fqmzm0000gn/T/tmp.0fTcl8MpAr to gs://porto-taxi-project-bf990986/results/20260829T141516Z/run_provenance.json
+  
+.....
+
+==============================================================
+  Pipeline finished in 4481s
+  Results: gs://porto-taxi-project-bf990986/results/20260829T141516Z
+
+  Pull them down and rebuild the notebook and deck:
+    gcloud storage cp -r gs://porto-taxi-project-bf990986/results/20260829T141516Z/* output/
+    python tools/validate_results.py output/stage3_subroutes.json
+    python tools/build_subroute_maps.py
+    python tools/build_stage3_notebook.py
+    node   tools/build_methods_deck.js
+==============================================================
+
+[5/5] deleting cluster...
+Waiting on operation [projects/project-bf990986-f458-4b39-926/regions/europe-west1/operations/86940036-25ee-3786-8640-4d7d3fd24b0a].
+Waiting for cluster deletion operation...
+.....................................................................................................................................................done.
+Deleted [https://dataproc.googleapis.com/v1/projects/project-bf990986-f458-4b39-926/regions/europe-west1/clusters/porto-pipeline].
+      deleted

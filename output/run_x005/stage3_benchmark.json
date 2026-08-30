@@ -1,0 +1,525 @@
+{
+  "methods": {
+    "gate": {
+      "k": 4,
+      "min_support_trips": 802,
+      "ngrams_streamed": 22273314,
+      "cms": {
+        "geometry": "5 x 838860",
+        "memory_mb": 32.0,
+        "epsilon": 3.24e-06,
+        "delta": 0.00674,
+        "total_mass": 22273314,
+        "additive_error_estimate": 72,
+        "additive_error_pct_of_support": 8.999
+      },
+      "cms_memory_mb": 32.0,
+      "cms_build_sec": 68.01,
+      "candidates_after_cms": 4069,
+      "exact_frequent": 4069,
+      "pruned_before_shuffle_pct": 99.9817,
+      "cms_false_positive_pct": 0.0,
+      "bloom_bits": 39008,
+      "bloom_hashes": 7,
+      "bloom_memory_kb": 4.8,
+      "bloom_observed_fp_rate": 0.0102,
+      "runtime_sec": 278.07
+    },
+    "method_a_lsh_clustering": {
+      "algorithm": "MinHash + LSH clustering of trajectory segments",
+      "approximate_structures": [
+        "MinHash signature (32 hashes)",
+        "LSH banding (8 bands x 4 rows, similarity threshold ~0.59)",
+        "DistinctCounter (exact <=64 trips, then HyperLogLog b=12, ~1.6% error) for distinct-trip support"
+      ],
+      "window_cells": 12,
+      "stride": 3,
+      "lsh_similarity_threshold": 0.5946,
+      "windows_hashed": 4168171,
+      "band_emissions": 33345368,
+      "buckets_above_support": 5094,
+      "representatives": 2370,
+      "min_support_trips": 802,
+      "runtime_sec": 506.33,
+      "distributed": true
+    },
+    "method_b_suffix_array": {
+      "algorithm": "Generalised suffix array + LCP array (prefix-bucketed, distributed)",
+      "approximate_structures": [
+        "Bloom filter over frequent 4-grams (4.8 KB, p~0.0102) used as an anti-monotone prefix gate before the shuffle"
+      ],
+      "prefix_bucket_cells": 2,
+      "max_suffix_cells": 40,
+      "min_repeat_cells": 5,
+      "suffix_positions_considered": 20736196,
+      "suffixes_emitted": 17198563,
+      "bloom_pruned_pct": 17.06,
+      "distinct_repeats_found": 24439,
+      "candidates": 5292,
+      "min_support_trips": 802,
+      "runtime_sec": 173.8,
+      "distributed": true,
+      "exact_within_scope": true
+    },
+    "method_c_growth": {
+      "algorithm": "Count-Min pruned level-wise growth with per-round verified support",
+      "approximate_structures": [
+        "Count-Min Sketch (via the shared gate) removes infrequent seeds before any shuffle",
+        "Bloom filter over frequent 4-grams gates extension candidates inside the map task (anti-monotone, no false negatives)"
+      ],
+      "seeds": 4069,
+      "rounds_run": 21,
+      "growth_direction": "forward only (leftward growth is redundant by anti-monotonicity)",
+      "max_step_cells": 4,
+      "branches_per_corridor": 2,
+      "beam_width": 600,
+      "max_beam_overlap": 0.75,
+      "max_gap_cells": 8,
+      "surviving_extension_keys": 38940,
+      "corridors_returned": 171,
+      "min_support_trips": 802,
+      "support_is_measured_each_round": true,
+      "round_log": [
+        {
+          "round": 1,
+          "frontier_in": 560,
+          "surviving_extensions": 16862,
+          "distinct_children": 1119,
+          "after_overlap_pruning": 253,
+          "frontier_out": 253,
+          "maximal_so_far": 0
+        },
+        {
+          "round": 2,
+          "frontier_in": 253,
+          "surviving_extensions": 6284,
+          "distinct_children": 500,
+          "after_overlap_pruning": 251,
+          "frontier_out": 251,
+          "maximal_so_far": 1
+        },
+        {
+          "round": 3,
+          "frontier_in": 251,
+          "surviving_extensions": 4740,
+          "distinct_children": 479,
+          "after_overlap_pruning": 243,
+          "frontier_out": 243,
+          "maximal_so_far": 9
+        },
+        {
+          "round": 4,
+          "frontier_in": 243,
+          "surviving_extensions": 3700,
+          "distinct_children": 441,
+          "after_overlap_pruning": 226,
+          "frontier_out": 226,
+          "maximal_so_far": 24
+        },
+        {
+          "round": 5,
+          "frontier_in": 226,
+          "surviving_extensions": 2844,
+          "distinct_children": 396,
+          "after_overlap_pruning": 138,
+          "frontier_out": 138,
+          "maximal_so_far": 45
+        },
+        {
+          "round": 6,
+          "frontier_in": 138,
+          "surviving_extensions": 1414,
+          "distinct_children": 232,
+          "after_overlap_pruning": 120,
+          "frontier_out": 120,
+          "maximal_so_far": 61
+        },
+        {
+          "round": 7,
+          "frontier_in": 120,
+          "surviving_extensions": 1066,
+          "distinct_children": 191,
+          "after_overlap_pruning": 105,
+          "frontier_out": 105,
+          "maximal_so_far": 76
+        },
+        {
+          "round": 8,
+          "frontier_in": 105,
+          "surviving_extensions": 760,
+          "distinct_children": 146,
+          "after_overlap_pruning": 81,
+          "frontier_out": 81,
+          "maximal_so_far": 100
+        },
+        {
+          "round": 9,
+          "frontier_in": 81,
+          "surviving_extensions": 527,
+          "distinct_children": 112,
+          "after_overlap_pruning": 51,
+          "frontier_out": 51,
+          "maximal_so_far": 121
+        },
+        {
+          "round": 10,
+          "frontier_in": 51,
+          "surviving_extensions": 270,
+          "distinct_children": 71,
+          "after_overlap_pruning": 41,
+          "frontier_out": 41,
+          "maximal_so_far": 131
+        },
+        {
+          "round": 11,
+          "frontier_in": 41,
+          "surviving_extensions": 169,
+          "distinct_children": 46,
+          "after_overlap_pruning": 28,
+          "frontier_out": 28,
+          "maximal_so_far": 144
+        },
+        {
+          "round": 12,
+          "frontier_in": 28,
+          "surviving_extensions": 113,
+          "distinct_children": 29,
+          "after_overlap_pruning": 17,
+          "frontier_out": 17,
+          "maximal_so_far": 155
+        },
+        {
+          "round": 13,
+          "frontier_in": 17,
+          "surviving_extensions": 90,
+          "distinct_children": 22,
+          "after_overlap_pruning": 10,
+          "frontier_out": 10,
+          "maximal_so_far": 161
+        },
+        {
+          "round": 14,
+          "frontier_in": 10,
+          "surviving_extensions": 46,
+          "distinct_children": 14,
+          "after_overlap_pruning": 8,
+          "frontier_out": 8,
+          "maximal_so_far": 163
+        },
+        {
+          "round": 15,
+          "frontier_in": 8,
+          "surviving_extensions": 25,
+          "distinct_children": 7,
+          "after_overlap_pruning": 4,
+          "frontier_out": 4,
+          "maximal_so_far": 167
+        },
+        {
+          "round": 16,
+          "frontier_in": 4,
+          "surviving_extensions": 13,
+          "distinct_children": 4,
+          "after_overlap_pruning": 2,
+          "frontier_out": 2,
+          "maximal_so_far": 169
+        },
+        {
+          "round": 17,
+          "frontier_in": 2,
+          "surviving_extensions": 8,
+          "distinct_children": 3,
+          "after_overlap_pruning": 2,
+          "frontier_out": 2,
+          "maximal_so_far": 169
+        },
+        {
+          "round": 18,
+          "frontier_in": 2,
+          "surviving_extensions": 5,
+          "distinct_children": 2,
+          "after_overlap_pruning": 1,
+          "frontier_out": 1,
+          "maximal_so_far": 170
+        },
+        {
+          "round": 19,
+          "frontier_in": 1,
+          "surviving_extensions": 3,
+          "distinct_children": 2,
+          "after_overlap_pruning": 1,
+          "frontier_out": 1,
+          "maximal_so_far": 170
+        },
+        {
+          "round": 20,
+          "frontier_in": 1,
+          "surviving_extensions": 1,
+          "distinct_children": 1,
+          "after_overlap_pruning": 1,
+          "frontier_out": 1,
+          "maximal_so_far": 170
+        },
+        {
+          "round": 21,
+          "frontier_in": 1,
+          "surviving_extensions": 0,
+          "distinct_children": 0,
+          "after_overlap_pruning": 0,
+          "frontier_out": 0,
+          "maximal_so_far": 171
+        }
+      ],
+      "runtime_sec": 1389.33,
+      "distributed": true
+    },
+    "per_method_scorecard": {
+      "cms_growth": {
+        "corridors_verified": 147,
+        "max_length_km": 15.02,
+        "mean_length_km": 5.53,
+        "mean_cells": 11.9,
+        "max_support": 5238,
+        "mean_support": 1344,
+        "with_holes": 106,
+        "mean_tortuosity": 1.355,
+        "support_overestimate_pct": 0.0,
+        "ge_1km": 147,
+        "ge_3km": 129,
+        "ge_5km": 70,
+        "ge_10km": 15,
+        "ge_20km": 0,
+        "ge_40km": 0
+      },
+      "lsh_clustering": {
+        "corridors_verified": 435,
+        "max_length_km": 4.92,
+        "mean_length_km": 4.08,
+        "mean_cells": 12.0,
+        "max_support": 10751,
+        "mean_support": 2684,
+        "with_holes": 0,
+        "mean_tortuosity": 1.308,
+        "support_overestimate_pct": 123.89,
+        "ge_1km": 435,
+        "ge_3km": 435,
+        "ge_5km": 0,
+        "ge_10km": 0,
+        "ge_20km": 0,
+        "ge_40km": 0
+      },
+      "suffix_array_lcp": {
+        "corridors_verified": 666,
+        "max_length_km": 9.46,
+        "mean_length_km": 6.14,
+        "mean_cells": 17.8,
+        "max_support": 5798,
+        "mean_support": 1500,
+        "with_holes": 0,
+        "mean_tortuosity": 1.359,
+        "support_overestimate_pct": 0.0,
+        "ge_1km": 666,
+        "ge_3km": 666,
+        "ge_5km": 666,
+        "ge_10km": 0,
+        "ge_20km": 0,
+        "ge_40km": 0
+      }
+    },
+    "anomaly_detection": {
+      "algorithm": "Bloom-filtered transition novelty + HyperLogLog taxi diversity",
+      "approximate_structures": [
+        "Bloom filter over frequent transitions (4.3 KB, p~0.0100) broadcast instead of the exact set",
+        "HyperLogLog (b=8, 256 B per cell) for distinct taxis per cell"
+      ],
+      "trips_scored": 1342107,
+      "min_trip_cells": 8,
+      "top_n": 100,
+      "runtime_sec": 71.2,
+      "distributed": true,
+      "transition_gate": {
+        "k": 2,
+        "min_support_trips": 320,
+        "ngrams_streamed": 25295555,
+        "cms": {
+          "geometry": "5 x 838860",
+          "memory_mb": 32.0,
+          "epsilon": 3.24e-06,
+          "delta": 0.00674,
+          "total_mass": 25295555,
+          "additive_error_estimate": 81,
+          "additive_error_pct_of_support": 25.615
+        },
+        "cms_memory_mb": 32.0,
+        "cms_build_sec": 60.01,
+        "candidates_after_cms": 3690,
+        "exact_frequent": 3690,
+        "pruned_before_shuffle_pct": 99.9854,
+        "cms_false_positive_pct": 0.0,
+        "bloom_bits": 35376,
+        "bloom_hashes": 7,
+        "bloom_memory_kb": 4.3,
+        "bloom_observed_fp_rate": 0.00997,
+        "runtime_sec": 321.63
+      }
+    }
+  },
+  "pipeline": {
+    "total_trips": 1602542,
+    "candidates_verified": 1479,
+    "corridors_reported": 461,
+    "verification_sec": 18.31,
+    "total_runtime_sec": 2838.99
+  },
+  "thresholds": {
+    "1": {
+      "found": 461,
+      "support_pct_used": 0.05,
+      "met_target": true
+    },
+    "3": {
+      "found": 446,
+      "support_pct_used": 0.05,
+      "met_target": true
+    },
+    "5": {
+      "found": 194,
+      "support_pct_used": 0.05,
+      "met_target": true
+    },
+    "10": {
+      "found": 14,
+      "support_pct_used": 0.05,
+      "met_target": false
+    },
+    "20": {
+      "found": 0,
+      "support_pct_used": 0.05,
+      "met_target": false
+    },
+    "40": {
+      "found": 0,
+      "support_pct_used": 0.05,
+      "met_target": false
+    }
+  },
+  "support_sweep": [
+    {
+      "support_pct": 0.05,
+      "min_trips": 802,
+      "corridors": 461,
+      "below_mining_floor": false,
+      "max_length_km": 15.02,
+      "mean_length_km": 5.13,
+      "mean_cells": 13.6,
+      "ge_1km": 461,
+      "ge_3km": 446,
+      "ge_5km": 194,
+      "ge_10km": 14,
+      "ge_20km": 0,
+      "ge_40km": 0
+    },
+    {
+      "support_pct": 0.1,
+      "min_trips": 1603,
+      "corridors": 88,
+      "below_mining_floor": false,
+      "max_length_km": 15.02,
+      "mean_length_km": 4.67,
+      "mean_cells": 11.4,
+      "ge_1km": 88,
+      "ge_3km": 84,
+      "ge_5km": 12,
+      "ge_10km": 4,
+      "ge_20km": 0,
+      "ge_40km": 0
+    },
+    {
+      "support_pct": 0.2,
+      "min_trips": 3206,
+      "corridors": 12,
+      "below_mining_floor": false,
+      "max_length_km": 9.74,
+      "mean_length_km": 4.85,
+      "mean_cells": 10.8,
+      "ge_1km": 12,
+      "ge_3km": 12,
+      "ge_5km": 2,
+      "ge_10km": 0,
+      "ge_20km": 0,
+      "ge_40km": 0
+    },
+    {
+      "support_pct": 0.3,
+      "min_trips": 4808,
+      "corridors": 2,
+      "below_mining_floor": false,
+      "max_length_km": 6.88,
+      "mean_length_km": 5.34,
+      "mean_cells": 8.0,
+      "ge_1km": 2,
+      "ge_3km": 2,
+      "ge_5km": 1,
+      "ge_10km": 0,
+      "ge_20km": 0,
+      "ge_40km": 0
+    },
+    {
+      "support_pct": 0.5,
+      "min_trips": 8013,
+      "corridors": 0,
+      "below_mining_floor": false,
+      "ge_1km": 0,
+      "ge_3km": 0,
+      "ge_5km": 0,
+      "ge_10km": 0,
+      "ge_20km": 0,
+      "ge_40km": 0
+    },
+    {
+      "support_pct": 1.0,
+      "min_trips": 16026,
+      "corridors": 0,
+      "below_mining_floor": false,
+      "ge_1km": 0,
+      "ge_3km": 0,
+      "ge_5km": 0,
+      "ge_10km": 0,
+      "ge_20km": 0,
+      "ge_40km": 0
+    }
+  ],
+  "length_ceiling": [
+    {
+      "min_length_km": 1.0,
+      "trips_at_least_this_long": 1560203,
+      "max_possible_support_pct": 97.358
+    },
+    {
+      "min_length_km": 3.0,
+      "trips_at_least_this_long": 1047535,
+      "max_possible_support_pct": 65.3671
+    },
+    {
+      "min_length_km": 5.0,
+      "trips_at_least_this_long": 593371,
+      "max_possible_support_pct": 37.0269
+    },
+    {
+      "min_length_km": 10.0,
+      "trips_at_least_this_long": 187002,
+      "max_possible_support_pct": 11.6691
+    },
+    {
+      "min_length_km": 20.0,
+      "trips_at_least_this_long": 15693,
+      "max_possible_support_pct": 0.9793
+    },
+    {
+      "min_length_km": 40.0,
+      "trips_at_least_this_long": 460,
+      "max_possible_support_pct": 0.0287
+    }
+  ],
+  "generated_utc": "2026-08-29T13:45:42.316008+00:00"
+}

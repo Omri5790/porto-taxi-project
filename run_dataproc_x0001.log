@@ -1,0 +1,33 @@
+==============================================================
+  Porto pipeline on Dataproc
+  project : project-bf990986-f458-4b39-926          region: europe-west1
+  cluster : porto-pipeline  (1 master + 5 workers x e2-standard-2)
+  stages  : 3
+  results : gs://porto-taxi-project-bf990986/results/20260830T080549Z
+==============================================================
+
+[1/5] packaging code...
+Copying file:///var/folders/0k/jwsfmt5d0x79q9q8jv0fqmzm0000gn/T/tmp.KcjbdtuZsN/code.zip to gs://porto-taxi-project-bf990986/code/code-20260830T080549Z.zip
+  
+........
+Copying file://scripts/stage1_data_preparation.py to gs://porto-taxi-project-bf990986/code/20260830T080549Z-stage1_data_preparation.py
+  
+.......
+Copying file://scripts/stage2_spatial_encoding.py to gs://porto-taxi-project-bf990986/code/20260830T080549Z-stage2_spatial_encoding.py
+  
+......
+Copying file://scripts/stage3/run_stage3.py to gs://porto-taxi-project-bf990986/code/20260830T080549Z-run_stage3.py
+  
+.......
+      uploaded
+
+[2/5] cluster...
+Waiting on operation [projects/project-bf990986-f458-4b39-926/regions/europe-west1/operations/2a5a617a-e40b-3a1d-a221-83ca3b5091b9].
+Waiting for cluster creation operation...
+WARNING: Consider using Auto Zone rather than selecting a zone manually. See https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/auto-zone
+WARNING: Failed to validate permissions required for default service account: '212659012096-compute@developer.gserviceaccount.com'. Cluster creation could still be successful if required permissions have been granted to the respective service accounts as mentioned in the document https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/service-accounts#dataproc_service_accounts_2. This could be due to Cloud Resource Manager API hasn't been enabled in your project '212659012096' before or it is disabled. Enable it by visiting 'https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/overview?project=212659012096'.
+WARNING: For PD-Standard without local SSDs, we strongly recommend provisioning 1TB or larger to ensure consistently high I/O performance. See https://cloud.google.com/compute/docs/disks/performance for information on disk I/O performance.
+WARNING: The firewall rules for specified network or subnetwork would allow ingress traffic from 0.0.0.0/0, which could be a security risk.
+..............................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................done.
+ERROR: (gcloud.dataproc.clusters.create) Operation [projects/project-bf990986-f458-4b39-926/regions/europe-west1/operations/2a5a617a-e40b-3a1d-a221-83ca3b5091b9] failed: Error Code: UNAVAILABLE, errorSource: COMPUTE_ENGINE, Error Message: The zone 'projects/project-bf990986-f458-4b39-926/zones/europe-west1-c' does not have enough resources available to fulfill the request.  Try a different zone, or try again later.
+.
