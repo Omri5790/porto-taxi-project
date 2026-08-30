@@ -98,6 +98,33 @@ the trajectories cover a taxi's whole day.
 It also bounds what "popular" can mean: support counts paid journeys along a
 stretch, out of 440 taxis, not vehicles on a road.
 
+### The long trips are mostly not journeys
+
+A follow-on question — why would a driver go in circles, when every row is a
+paid fare? — turned into a finding. `tools/measure_trip_geometry.py` compares
+each trip's walked path against the straight line from its start to its end:
+
+| trips of | count | median tortuosity | end where they began | journeys |
+|:---|---:|---:|---:|---:|
+| ≥ 1 km | 1,562,225 | 1.45 | 3% | **90.8%** |
+| ≥ 10 km | 189,009 | 1.63 | 4% | **78.5%** |
+| ≥ 20 km | 17,437 | 3.23 | 11% | **39.9%** |
+| ≥ 40 km | 1,459 | 19.71 | 22% | **0.3%** |
+
+The longer a "trip" is, the less it looks like a journey. Of the 1,459 trips of
+40 km or more, **four** walk a path within 2.5× their straight-line displacement.
+The rest wander and come back — 22% end within 500 m of where they started,
+after tens of kilometres, over a median of 1.6 hours. Those are not fares; they
+are meters that were never stopped, with a whole afternoon of driving recorded
+as one journey.
+
+This is a gap in **Stage 1**, not Stage 3: the cleaning rules cap distance at
+100 km and duration at 24 hours, and a wandering 40 km trip passes both. A
+tortuosity rule would remove them. The published corridors are unaffected —
+they already refuse shapes like that — but the `length_ceiling` reported
+alongside them is optimistic by exactly this margin, and the honest ceiling at
+40 km is four trips rather than 460.
+
 ## Stage 2 — spatial encoding
 
 `scripts/stage2_spatial_encoding.py`
