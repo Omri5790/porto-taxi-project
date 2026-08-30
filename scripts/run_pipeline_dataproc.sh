@@ -82,6 +82,15 @@ STATE="$(gcloud dataproc clusters describe "$CLUSTER" --region="$REGION" --forma
 if [[ "$STATE" == "RUNNING" ]]; then
   echo "      '$CLUSTER' is RUNNING, reusing it"
 else
+  # A creation that failed on zone capacity leaves the cluster behind in ERROR.
+  # It is not RUNNING, so the branch above declines to reuse it -- and then the
+  # create below fails with ALREADY_EXISTS and the whole run stops on a cluster
+  # nobody wants.  Clear it out first.
+  if [[ -n "$STATE" ]]; then
+    echo "      '$CLUSTER' exists in state $STATE, not RUNNING -- deleting it"
+    gcloud dataproc clusters delete "$CLUSTER" --region="$REGION" --quiet || true
+  fi
+
   gcloud dataproc clusters create "$CLUSTER" \
     --region="$REGION" \
     --zone="${ZONE:-europe-west1-b}" \

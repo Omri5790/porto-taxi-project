@@ -1,0 +1,25 @@
+==============================================================
+  Porto pipeline on Dataproc
+  project : project-bf990986-f458-4b39-926          region: europe-west1
+  cluster : porto-pipeline  (1 master + 5 workers x e2-standard-2)
+  stages  : 3
+  results : gs://porto-taxi-project-bf990986/results/20260830T082108Z
+==============================================================
+
+[1/5] packaging code...
+Copying file:///var/folders/0k/jwsfmt5d0x79q9q8jv0fqmzm0000gn/T/tmp.cvSOESajAT/code.zip to gs://porto-taxi-project-bf990986/code/code-20260830T082108Z.zip
+  
+......
+Copying file://scripts/stage1_data_preparation.py to gs://porto-taxi-project-bf990986/code/20260830T082108Z-stage1_data_preparation.py
+  
+......
+Copying file://scripts/stage2_spatial_encoding.py to gs://porto-taxi-project-bf990986/code/20260830T082108Z-stage2_spatial_encoding.py
+  
+.......
+Copying file://scripts/stage3/run_stage3.py to gs://porto-taxi-project-bf990986/code/20260830T082108Z-run_stage3.py
+  
+......
+      uploaded
+
+[2/5] cluster...
+ERROR: (gcloud.dataproc.clusters.create) ALREADY_EXISTS: Already exists: Failed to create cluster: Cluster projects/project-bf990986-f458-4b39-926/regions/europe-west1/clusters/porto-pipeline
