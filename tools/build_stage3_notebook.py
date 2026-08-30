@@ -287,6 +287,68 @@ CELLS.append(code('''if longest:
     print("Each line is ONE trip. No two of them share 40 km of road -- which is")
     print("why the >= 40 km configuration is empty, and this is what that looks like.")'''))
 
+CELLS.append(md("""### Settling >= 20 km and >= 40 km by exhaustion
+
+The section above shows what long *trips* look like. This one answers the
+harder question directly: does a long **corridor** exist at all, at any support
+threshold?
+
+A trip can only traverse a corridor of length L if the trip is itself at least
+L long, so the support of a 20 km corridor over all 1.6M trips is *exactly* its
+support over the 25,223 trips that are themselves >= 20 km. Nothing is
+approximated by restricting to them -- the rest contribute zero by definition.
+That set is small enough to mine on one machine at a support of **two trips**,
+which is as low as the word "shared" can go.
+
+The two configurations turn out to be empty for different reasons, and only one
+of them is a limitation of the pipeline.
+
+Produced by `tools/probe_long_corridors.py` and `tools/export_long_corridors.py`;
+the cell is skipped if the file is not alongside the results."""))
+
+CELLS.append(code('''try:
+    probe = load("long_corridors_probe.json")
+except Exception as exc:
+    probe = None
+    print(f"long_corridors_probe.json not found beside the results ({type(exc).__name__});"
+          " run tools/export_long_corridors.py to produce it")
+
+if probe:
+    print(probe["note"])
+    print()
+    print(f"  searched          : {probe['long_trips_searched']:,} trips of >= 20 km")
+    print(f"  distinct valid    : {probe['distinct_valid_found']} corridors >= 20 km")
+    print(f"  best support      : {probe['max_support_trips']} trips")
+    print(f"  mining floor      : {probe['mining_floor_trips']} trips")
+    print()
+    c = probe["corridors"]
+    print(f"  {'#':>3}{'km':>9}{'trips':>8}{'cells':>8}{'tortuosity':>12}")
+    for i, r in enumerate(c[:10], 1):
+        print(f"  {i:>3}{r['length_km']:>9.2f}{r['support_trips']:>8}"
+              f"{r['n_cells']:>8}{r['tortuosity']:>12.2f}")
+    print()
+    print("  Read the support column.  These corridors are real and they are")
+    print("  valid, and the best of them is driven in common by three taxis out")
+    print(f"  of {probe['total_trips_in_dataset']:,}.  Stage 3 reports none at >= 20 km")
+    print("  because none is popular -- which is the question the brief asked.")
+    print("  At >= 40 km there is no candidate at all, at a support of two:")
+    print("  no two trips in the dataset share 40 contiguous kilometres.")'''))
+
+CELLS.append(code('''if probe:
+    m = folium.Map(location=[41.15, -8.61], zoom_start=10, tiles="cartodbpositron")
+    for r in probe["corridors"]:
+        pts = [(p["lat"], p["lng"]) for p in r["coordinates"]]
+        if len(pts) < 2:
+            continue
+        folium.PolyLine(
+            pts, color="#5a6b75", weight=2.5, opacity=0.55, dash_array="4,6",
+            tooltip=f"{r['length_km']:.2f} km &middot; <b>{r['support_trips']} trips only</b>"
+        ).add_to(m)
+    display(m)
+    print("Drawn grey and dashed on purpose: these are NOT pipeline output and")
+    print("are NOT popular.  They are here to show that the >= 20 km answer is")
+    print("'exists but rare', not 'does not exist'.")'''))
+
 CELLS.append(md("""## 6. Unusual routes
 
 The brief's third question. A trip is unusual to the extent that it uses cell
