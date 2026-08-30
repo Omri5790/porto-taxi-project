@@ -78,6 +78,26 @@ Two details worth knowing:
 Extracted per trip: raw and deduplicated point counts, duration, Haversine
 distance, start and end coordinates, mean speed, and calendar features.
 
+## What the data does not contain
+
+Each row of the dataset is one **fare** — the trajectory starts when the meter
+starts and ends when it stops. What the taxi did between fares is not recorded.
+
+Measured on 167,928 consecutive trip pairs by the same taxi (ignoring gaps over
+three hours, which are shift breaks): the distance between where one fare ended
+and the next began has a median of **1.72 km**, and exceeds 1 km **67.3%** of the
+time. Only 5.9% of pairs are continuous within 100 m. The median idle time
+between fares is 48 minutes.
+
+So the corridors this project finds are **demand corridors, not traffic
+corridors**. A road that taxis drive constantly while empty — heading back to
+the airport rank, cruising for a hail — is invisible here. That is a property of
+the dataset, and it is worth saying out loud rather than letting a reader assume
+the trajectories cover a taxi's whole day.
+
+It also bounds what "popular" can mean: support counts paid journeys along a
+stretch, out of 440 taxis, not vehicles on a road.
+
 ## Stage 2 — spatial encoding
 
 `scripts/stage2_spatial_encoding.py`
