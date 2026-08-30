@@ -26,10 +26,19 @@ A second signal: taxi diversity
 -------------------------------
 A cell can carry heavy traffic from very few vehicles -- a depot approach, a
 single driver's habit, a hotel shuttle loop.  We count *distinct taxis* per cell
-with a HyperLogLog (4 KB per cell regardless of traffic) and compare it against
-raw traversals.  Cells with many traversals but few distinct taxis are
-structurally different from cells that are simply busy, and they are worth
-showing on the map next to the popular corridors.
+with a HyperLogLog and compare it against raw traversals.
+
+Two lists come out of that, and keeping them apart matters.  ``busiest_cells``
+is simply the heaviest traffic, which is the brief's second question -- where
+the activity hotspots are.  ``concentrated_cells`` is the structural signal:
+heavy use by *few* vehicles.
+
+The second one needs the fleet cap to mean anything.  Ranked by
+traversals-per-taxi alone it returned cells crossed by 423-429 of the 440
+taxis -- the distinct count saturates on every busy cell, so the ranking
+collapsed into "sort by traversals" and reported the busiest cells while
+calling them the least diverse.  Excluding cells the whole fleet uses is what
+makes the ratio informative.
 """
 
 from __future__ import annotations
@@ -42,9 +51,15 @@ from .sketches import HyperLogLog
 MIN_TRIP_CELLS = 8
 TOP_N = 100
 
+#: A cell crossed by more than this share of the fleet is a hotspot, not a
+#: concentration.  Without the cap the distinct-taxi count saturates -- every
+#: busy cell in Porto sees 96-98% of the 440 taxis -- and ranking by
+#: traversals-per-taxi degenerates into ranking by traversals.
+MAX_FLEET_SHARE = 0.5
+
 
 def run(sc, base_rdd, total_trips: int, bc_bloom, top_n: int = TOP_N,
-        min_cells: int = MIN_TRIP_CELLS):
+        min_cells: int = MIN_TRIP_CELLS, total_taxis: int = 0):
     """Score every trip for novelty and return the most anomalous ones.
 
     Parameters
@@ -103,24 +118,49 @@ def run(sc, base_rdd, total_trips: int, bc_bloom, top_n: int = TOP_N,
     def comb_op(a, b):
         return (a[0].merge(b[0]), a[1] + b[1])
 
-    diversity = (base_rdd
-                 .mapPartitions(cell_taxis)
-                 .aggregateByKey((HyperLogLog(b=8), 0), seq_op, comb_op)
-                 .mapValues(lambda v: (v[0].count(), v[1]))
-                 .filter(lambda kv: kv[1][1] >= 200)
-                 .map(lambda kv: (kv[0], kv[1][0], kv[1][1],
-                                  round(kv[1][1] / max(kv[1][0], 1), 2)))
-                 .takeOrdered(50, key=lambda r: -r[3]))
+    # (cell, distinct taxis, traversals, traversals per taxi)
+    per_cell = (base_rdd
+                .mapPartitions(cell_taxis)
+                .aggregateByKey((HyperLogLog(b=8), 0), seq_op, comb_op)
+                .mapValues(lambda v: (v[0].count(), v[1]))
+                .filter(lambda kv: kv[1][1] >= 200)
+                .map(lambda kv: (kv[0], kv[1][0], kv[1][1],
+                                 round(kv[1][1] / max(kv[1][0], 1), 2)))
+                .cache())
+
+    # The busiest cells -- the answer to "which areas are activity hotspots".
+    busiest = per_cell.takeOrdered(50, key=lambda r: -r[2])
+
+    # Cells used heavily by *few* vehicles.  Ranking by traversals-per-taxi alone
+    # does not find these: every busy cell in Porto is crossed by almost the
+    # whole 440-taxi fleet, so the distinct count saturates and the ranking
+    # collapses into "sort by traversals" -- it returned the busiest cells while
+    # calling them the least diverse.  The concentration signal only means
+    # something once cells the whole fleet uses are excluded.
+    fleet_cap = int(total_taxis * MAX_FLEET_SHARE) if total_taxis else 0
+    concentrated = (per_cell
+                    .filter(lambda r: fleet_cap == 0 or r[1] <= fleet_cap)
+                    .takeOrdered(50, key=lambda r: -r[3]))
+    per_cell.unpersist()
 
     elapsed = time.time() - t0
     result = {
         "top_anomalous_trips": top,
         "novelty_histogram": [{"novelty_bin": b, "trips": n} for b, n in buckets],
-        "low_diversity_cells": [
+        "busiest_cells": [
             {"cell": str(c), "distinct_taxis_hll": t,
              "traversals": n, "traversals_per_taxi": ratio}
-            for c, t, n, ratio in diversity
+            for c, t, n, ratio in busiest
         ],
+        "concentrated_cells": [
+            {"cell": str(c), "distinct_taxis_hll": t,
+             "traversals": n, "traversals_per_taxi": ratio}
+            for c, t, n, ratio in concentrated
+        ],
+        "concentrated_cells_note": (
+            f"cells crossed by at most {int(MAX_FLEET_SHARE*100)}% of the fleet, "
+            f"ranked by traversals per taxi: heavy use by few vehicles rather "
+            f"than heavy use by everyone"),
     }
     stats = {
         "algorithm": "Bloom-filtered transition novelty + HyperLogLog taxi diversity",

@@ -59,3 +59,219 @@ Waiting for job output...
 STEP 1: Loading raw dataset from gs://porto-taxi-project-bf990986/raw/train.csv...
 
 STEP 2: Processing 1.71M trips in PySpark mapPartitions across CPU cores...
+  ✓ Stage 1 Cleaning completed! Valid clean trips: 1,616,575
+
+  Per-rule breakdown:
+    rule                                                               trips    share
+    1. MISSING_DATA flag set by the telemetry                             10   0.001%
+    2. empty POLYLINE (booking cancelled immediately)                  5,901   0.345%
+    2b. POLYLINE not valid JSON                                            0   0.000%
+    3. fewer than 2 GPS points                                        30,607   1.789%
+    4. duration over 24 hours (meter left running)                         0   0.000%
+    5. a GPS point outside the wider region (satellite error)            321   0.019%
+    6. jump implying over 200 km/h (satellite error)                  38,092   2.227%
+    7. under 2 distinct points after deduplication                       207   0.012%
+    8. shorter than 0.2 km (not a journey)                            18,310   1.070%
+    9. longer than 100.0 km (implausible for this city)                  647   0.038%
+    ---------------------------------------------------------------------------------
+    removed                                                           94,095   5.500%
+    kept                                                           1,616,575  94.500%
+
+STEP 3: Generating Statistics...
+  Overview: 1,616,575 trips, 440 unique taxis
++-------+------------------+------------------+-----------------+-----------------+------------------+
+|summary|        num_points|    num_points_raw|     duration_sec|      distance_km|     avg_speed_kmh|
++-------+------------------+------------------+-----------------+-----------------+------------------+
+|  count|           1616575|           1616575|          1616575|          1616575|           1616575|
+|   mean| 48.98636685585265| 49.66628210877936|729.9942316316905|5.452024416560148|26.962202693967775|
+| stddev|37.224224848016064|39.022119086705224|585.3317863005769|5.081779508742007|13.076156536315416|
+|    min|                 2|                 2|               15|              0.2|              0.13|
+|    max|              3585|              3836|            57525|          99.9724|            197.08|
++-------+------------------+------------------+-----------------+-----------------+------------------+
+
+  Distance percentiles (km):
+      p1:    0.669 km
+     p25:    2.487 km
+     p50:    4.010 km
+     p75:    6.582 km
+     p90:   11.117 km
+     p95:   14.614 km
+     p99:   22.538 km
+
+STEP 4: Saving Parquet to gs://porto-taxi-project-bf990986/data/cleaned_trips.parquet...
+  ✓ Saved Parquet successfully!
+  ✓ Cleaning report saved to gs://porto-taxi-project-bf990986/results/20260830T121916Z/cleaning_report.json
+
+======================================================================
+  ✅ Stage 1 completed successfully in 1002.9 seconds (16.72 minutes)
+======================================================================
+Job [stage1-20260830T121916Z] finished successfully.
+done: true
+driverControlFilesUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/c82329ac-f701-44e1-aa9a-662c925d1de8/jobs/stage1-20260830T121916Z/
+driverOutputResourceUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/c82329ac-f701-44e1-aa9a-662c925d1de8/jobs/stage1-20260830T121916Z/driveroutput
+jobUuid: 8ef9a8fe-363a-33e9-9185-ea3ac3443208
+placement:
+  clusterName: porto-pipeline
+  clusterUuid: c82329ac-f701-44e1-aa9a-662c925d1de8
+pysparkJob:
+  args:
+  - --mode=gcs
+  - --input_path=gs://porto-taxi-project-bf990986/raw/train.csv
+  - --output_path=gs://porto-taxi-project-bf990986/data/cleaned_trips.parquet
+  - --report_path=gs://porto-taxi-project-bf990986/results/20260830T121916Z/cleaning_report.json
+  mainPythonFileUri: gs://porto-taxi-project-bf990986/code/20260830T121916Z-stage1_data_preparation.py
+  pythonFileUris:
+  - gs://porto-taxi-project-bf990986/code/code-20260830T121916Z.zip
+reference:
+  jobId: stage1-20260830T121916Z
+  projectId: project-bf990986-f458-4b39-926
+status:
+  state: DONE
+  stateStartTime: '2026-08-30T12:40:58.236485Z'
+statusHistory:
+- state: PENDING
+  stateStartTime: '2026-08-30T12:23:51.843393Z'
+- state: SETUP_DONE
+  stateStartTime: '2026-08-30T12:23:51.924377Z'
+- details: Agent reported job success
+  state: RUNNING
+  stateStartTime: '2026-08-30T12:23:52.474422Z'
+yarnApplications:
+- memoryMbSeconds: '3478026'
+  name: PortoTaxi_Stage1_PySparkEngine
+  progress: 1.0
+  state: FINISHED
+  trackingUrl: http://porto-pipeline-m.europe-west1-b.c.project-bf990986-f458-4b39-926.internal.:8088/proxy/application_1788092536124_0001/
+  vcoreSeconds: '1060'
+      stage1 finished in 1034s
+
+      submitting stage2...
+Job [stage2-20260830T121916Z] submitted.
+Waiting for job output...
+╔══════════════════════════════════════════════════════════════╗
+║  Porto Taxi Project – Stage 2: H3 Spatial Encoding Engine    ║
+║  Resolutions: Res 8 (~0.73km²), Res 9 (~0.10km²), Res 10 (~0.015km²)║
+║  Mode: gcs         Full Dataset: True                   ║
+║  Time: 2026-08-30 12:41:32                       ║
+╚══════════════════════════════════════════════════════════════╝
+26/08/30 12:41:35 INFO SparkEnv: Registering MapOutputTracker
+26/08/30 12:41:35 INFO SparkEnv: Registering BlockManagerMaster
+26/08/30 12:41:35 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+26/08/30 12:41:36 INFO SparkEnv: Registering OutputCommitCoordinator
+26/08/30 12:41:40 INFO DataprocSparkPlugin: Registered 128 driver metrics
+26/08/30 12:41:42 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-b.c.project-bf990986-f458-4b39-926.internal./10.132.0.58:8032
+26/08/30 12:41:42 INFO AHSProxy: Connecting to Application History server at porto-pipeline-m.europe-west1-b.c.project-bf990986-f458-4b39-926.internal./10.132.0.58:10200
+26/08/30 12:41:44 INFO Configuration: resource-types.xml not found
+26/08/30 12:41:44 INFO ResourceUtils: Unable to find 'resource-types.xml'.
+26/08/30 12:41:46 INFO YarnClientImpl: Submitted application application_1788092536124_0002
+26/08/30 12:41:48 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-b.c.project-bf990986-f458-4b39-926.internal./10.132.0.58:8030
+26/08/30 12:41:50 INFO GhfsStorageStatistics: Detected potential high latency for operation op_get_file_status. latencyMs=1128; previousMaxLatencyMs=0; operationCount=1; context=gs://dataproc-temp-europe-west1-212659012096-77fhpvt8/c82329ac-f701-44e1-aa9a-662c925d1de8/spark-job-history
+26/08/30 12:41:51 INFO GoogleCloudStorageImpl: Ignoring exception of type GoogleJsonResponseException; verified object already exists with desired state.
+
+STEP 1: Reading cleaned trips dataset from gs://porto-taxi-project-bf990986/data/cleaned_trips.parquet...
+  ✓ Loaded 1,616,575 cleaned trips for H3 spatial encoding.
+
+STEP 2: Encoding trajectories into H3 Res 8, Res 9 & Res 10 in PySpark mapPartitions...
+
+STEP 3: Saving H3-encoded Parquet directly to gs://porto-taxi-project-bf990986/data/h3_encoded_trips.parquet...
+26/08/30 12:42:27 WARN package: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+  ✓ Saved H3 Parquet dataset successfully!
+
+STEP 4: Computing H3 Grid Analytics on saved Parquet...
+  • Total Clean Trips H3-Encoded: 1,616,575
+  • Unique H3 Res 8 Cells Covered in Porto: 5,560 cells (~0.73 km² each)
+  • Unique H3 Res 9 Cells Covered in Porto: 20,592 cells (~0.10 km² each)
+  • Unique H3 Res 10 Cells Covered in Porto: 63,872 cells (~0.015 km² / 66m edge)
++-------+-----------------+------------------+------------------+
+|summary|   h3_res8_length|    h3_res9_length|   h3_res10_length|
++-------+-----------------+------------------+------------------+
+|  count|          1616575|           1616575|           1616575|
+|   mean|7.927328456768167|17.462293429008863|29.921568748743486|
+| stddev|6.456469425035143|13.689456651251135| 19.46691770661396|
+|    min|                1|                 1|                 1|
+|    max|              134|               314|               574|
++-------+-----------------+------------------+------------------+
+
+  ✓ H3 Encoding report saved to gs://porto-taxi-project-bf990986/results/20260830T121916Z/h3_encoding_report.json
+
+======================================================================
+  ✅ Stage 2 H3 Spatial Encoding completed in 473.3 seconds (7.89 minutes)
+======================================================================
+Job [stage2-20260830T121916Z] finished successfully.
+done: true
+driverControlFilesUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/c82329ac-f701-44e1-aa9a-662c925d1de8/jobs/stage2-20260830T121916Z/
+driverOutputResourceUri: gs://dataproc-staging-europe-west1-212659012096-dyj0vct5/google-cloud-dataproc-metainfo/c82329ac-f701-44e1-aa9a-662c925d1de8/jobs/stage2-20260830T121916Z/driveroutput
+jobUuid: 7e84394e-5073-3ceb-bfd0-ca71c4f1ef78
+placement:
+  clusterName: porto-pipeline
+  clusterUuid: c82329ac-f701-44e1-aa9a-662c925d1de8
+pysparkJob:
+  args:
+  - --mode=gcs
+  - --input_path=gs://porto-taxi-project-bf990986/data/cleaned_trips.parquet
+  - --output_path=gs://porto-taxi-project-bf990986/data/h3_encoded_trips.parquet
+  - --report_path=gs://porto-taxi-project-bf990986/results/20260830T121916Z/h3_encoding_report.json
+  mainPythonFileUri: gs://porto-taxi-project-bf990986/code/20260830T121916Z-stage2_spatial_encoding.py
+  pythonFileUris:
+  - gs://porto-taxi-project-bf990986/code/code-20260830T121916Z.zip
+reference:
+  jobId: stage2-20260830T121916Z
+  projectId: project-bf990986-f458-4b39-926
+status:
+  state: DONE
+  stateStartTime: '2026-08-30T12:49:29.430152Z'
+statusHistory:
+- state: PENDING
+  stateStartTime: '2026-08-30T12:41:06.262664Z'
+- state: SETUP_DONE
+  stateStartTime: '2026-08-30T12:41:06.339513Z'
+- details: Agent reported job success
+  state: RUNNING
+  stateStartTime: '2026-08-30T12:41:06.869786Z'
+yarnApplications:
+- memoryMbSeconds: '12914011'
+  name: PortoTaxi_Stage2_H3SpatialEncoding
+  progress: 1.0
+  state: FINISHED
+  trackingUrl: http://porto-pipeline-m.europe-west1-b.c.project-bf990986-f458-4b39-926.internal.:8088/proxy/application_1788092536124_0002/
+  vcoreSeconds: '3935'
+      stage2 finished in 513s
+
+      submitting stage3...
+Job [stage3-20260830T121916Z] submitted.
+Waiting for job output...
+26/08/30 12:49:58 INFO SparkEnv: Registering MapOutputTracker
+26/08/30 12:49:58 INFO SparkEnv: Registering BlockManagerMaster
+26/08/30 12:49:58 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+26/08/30 12:49:59 INFO SparkEnv: Registering OutputCommitCoordinator
+26/08/30 12:50:02 INFO DataprocSparkPlugin: Registered 128 driver metrics
+26/08/30 12:50:03 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-b.c.project-bf990986-f458-4b39-926.internal./10.132.0.58:8032
+26/08/30 12:50:03 INFO AHSProxy: Connecting to Application History server at porto-pipeline-m.europe-west1-b.c.project-bf990986-f458-4b39-926.internal./10.132.0.58:10200
+26/08/30 12:50:05 INFO Configuration: resource-types.xml not found
+26/08/30 12:50:05 INFO ResourceUtils: Unable to find 'resource-types.xml'.
+26/08/30 12:50:07 INFO YarnClientImpl: Submitted application application_1788092536124_0003
+26/08/30 12:50:08 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-b.c.project-bf990986-f458-4b39-926.internal./10.132.0.58:8030
+26/08/30 12:50:10 INFO GhfsStorageStatistics: Detected potential high latency for operation op_get_file_status. latencyMs=986; previousMaxLatencyMs=0; operationCount=1; context=gs://dataproc-temp-europe-west1-212659012096-77fhpvt8/c82329ac-f701-44e1-aa9a-662c925d1de8/spark-job-history
+26/08/30 12:50:10 INFO GoogleCloudStorageImpl: Ignoring exception of type GoogleJsonResponseException; verified object already exists with desired state.
+==========================================================================
+  Stage 3 - Popular Long Sub-Route Discovery
+  input   : gs://porto-taxi-project-bf990986/data/h3_encoded_trips.parquet
+  output  : gs://porto-taxi-project-bf990986/results/20260830T121916Z
+  support : 0.002% (mining floor; sweep derived from it)
+==========================================================================
+
+Loaded 1,616,575 trips (cells from h3_res9).
+Mining floor: 33 trips = 0.002%
+
+Upper bound on support, from the trip-length distribution alone:
+  a corridor of >=    1 km can be supported by at most 1,574,154 trips (97.3759%)
+  a corridor of >=    3 km can be supported by at most 1,061,365 trips (65.6552%)
+  a corridor of >=    5 km can be supported by at most   607,096 trips (37.5545%)
+  a corridor of >=   10 km can be supported by at most   200,530 trips (12.4046%)
+  a corridor of >=   20 km can be supported by at most    25,223 trips (1.5603%)
+  a corridor of >=   40 km can be supported by at most     3,509 trips (0.2171%)
+
+[gate] Count-Min pre-filter + Bloom over frequent 4-grams
+  streamed 23,354,267 n-grams, 99.8748% pruned before the shuffle, 29,234 frequent
+
+[A] MinHash + LSH clustering

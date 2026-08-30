@@ -439,7 +439,12 @@ def main():
         print("\n[anomalies] Bloom transition novelty + HyperLogLog taxi diversity")
         trans_support = max(20, int(total_trips * 0.0002))
         _f2, bc_bloom2, gate2 = gate.build_gate(sc, trips_rdd, 2, trans_support)
-        ta2, anom, stats_anom = anomalies.run(sc, base_rdd, total_trips, bc_bloom2)
+        # The fleet size is what makes "few taxis" mean anything -- see
+        # MAX_FLEET_SHARE in anomalies.py.
+        total_taxis = base_rdd.map(lambda r: r[2]).distinct().count()
+        ta2, anom, stats_anom = anomalies.run(sc, base_rdd, total_trips, bc_bloom2,
+                                              total_taxis=total_taxis)
+        stats_anom["fleet_size"] = total_taxis
         reports["anomaly_detection"] = {**stats_anom, "transition_gate": gate2}
         write_json(spark, join(args.output_dir, "stage3_anomalous_routes.json"), anom)
         print(f"  scored {stats_anom['trips_scored']:,} trips in {ta2:.1f}s")
