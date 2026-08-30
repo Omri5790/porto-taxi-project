@@ -1,0 +1,61 @@
+==============================================================
+  Porto pipeline on Dataproc
+  project : project-bf990986-f458-4b39-926          region: europe-west1
+  cluster : porto-pipeline  (1 master + 5 workers x e2-standard-2)
+  stages  : 123
+  results : gs://porto-taxi-project-bf990986/results/20260830T121916Z
+==============================================================
+
+[1/5] packaging code...
+Copying file:///var/folders/0k/jwsfmt5d0x79q9q8jv0fqmzm0000gn/T/tmp.Mx3VpqcNeH/code.zip to gs://porto-taxi-project-bf990986/code/code-20260830T121916Z.zip
+  
+........
+Copying file://scripts/stage1_data_preparation.py to gs://porto-taxi-project-bf990986/code/20260830T121916Z-stage1_data_preparation.py
+  
+......
+Copying file://scripts/stage2_spatial_encoding.py to gs://porto-taxi-project-bf990986/code/20260830T121916Z-stage2_spatial_encoding.py
+  
+......
+Copying file://scripts/stage3/run_stage3.py to gs://porto-taxi-project-bf990986/code/20260830T121916Z-run_stage3.py
+  
+......
+      uploaded
+
+[2/5] cluster...
+Waiting on operation [projects/project-bf990986-f458-4b39-926/regions/europe-west1/operations/6b1e00d9-afbf-3fd9-9750-6c51c3cf26fa].
+Waiting for cluster creation operation...
+WARNING: Consider using Auto Zone rather than selecting a zone manually. See https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/auto-zone
+WARNING: Failed to validate permissions required for default service account: '212659012096-compute@developer.gserviceaccount.com'. Cluster creation could still be successful if required permissions have been granted to the respective service accounts as mentioned in the document https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/service-accounts#dataproc_service_accounts_2. This could be due to Cloud Resource Manager API hasn't been enabled in your project '212659012096' before or it is disabled. Enable it by visiting 'https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/overview?project=212659012096'.
+WARNING: For PD-Standard without local SSDs, we strongly recommend provisioning 1TB or larger to ensure consistently high I/O performance. See https://cloud.google.com/compute/docs/disks/performance for information on disk I/O performance.
+WARNING: The firewall rules for specified network or subnetwork would allow ingress traffic from 0.0.0.0/0, which could be a security risk.
+.........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................done.
+Created [https://dataproc.googleapis.com/v1/projects/project-bf990986-f458-4b39-926/regions/europe-west1/clusters/porto-pipeline] Cluster placed in zone [europe-west1-b].
+      created (6 nodes)
+
+[3/5] running stages...
+
+      submitting stage1...
+Job [stage1-20260830T121916Z] submitted.
+Waiting for job output...
+╔══════════════════════════════════════════════════════════════╗
+║  Porto Taxi Project – Stage 1: High-Performance PySpark      ║
+║  Mode: gcs         Full Dataset: True                   ║
+║  Time: 2026-08-30 12:24:12                       ║
+╚══════════════════════════════════════════════════════════════╝
+26/08/30 12:24:14 INFO SparkEnv: Registering MapOutputTracker
+26/08/30 12:24:14 INFO SparkEnv: Registering BlockManagerMaster
+26/08/30 12:24:15 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+26/08/30 12:24:15 INFO SparkEnv: Registering OutputCommitCoordinator
+26/08/30 12:24:18 INFO DataprocSparkPlugin: Registered 128 driver metrics
+26/08/30 12:24:20 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-b.c.project-bf990986-f458-4b39-926.internal./10.132.0.58:8032
+26/08/30 12:24:20 INFO AHSProxy: Connecting to Application History server at porto-pipeline-m.europe-west1-b.c.project-bf990986-f458-4b39-926.internal./10.132.0.58:10200
+26/08/30 12:24:22 INFO Configuration: resource-types.xml not found
+26/08/30 12:24:22 INFO ResourceUtils: Unable to find 'resource-types.xml'.
+26/08/30 12:24:28 INFO YarnClientImpl: Submitted application application_1788092536124_0001
+26/08/30 12:24:29 INFO DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at porto-pipeline-m.europe-west1-b.c.project-bf990986-f458-4b39-926.internal./10.132.0.58:8030
+26/08/30 12:24:33 INFO GhfsStorageStatistics: Detected potential high latency for operation op_get_file_status. latencyMs=1075; previousMaxLatencyMs=0; operationCount=1; context=gs://dataproc-temp-europe-west1-212659012096-77fhpvt8/c82329ac-f701-44e1-aa9a-662c925d1de8/spark-job-history
+26/08/30 12:24:34 INFO GoogleCloudStorageImpl: Ignoring exception of type GoogleJsonResponseException; verified object already exists with desired state.
+
+STEP 1: Loading raw dataset from gs://porto-taxi-project-bf990986/raw/train.csv...
+
+STEP 2: Processing 1.71M trips in PySpark mapPartitions across CPU cores...

@@ -237,6 +237,56 @@ else:
           f"({{cap['max_possible_support_pct']:.4f}}%) are even {km} km long, so no corridor "
           f"of this length can be popular in this dataset.")'''))
 
+CELLS.append(md("""### The longest individual journeys — for contrast
+
+The maps above are **sub-routes**: stretches many different trips share. This
+section is a different object — the longest **single journeys** in the dataset,
+one taxi each, no shared support at all.
+
+It is here because the difference is what makes the >= 20 km and >= 40 km
+results hard to picture. Long trips exist in this city; what does not exist is
+40 km of road that thirty of them drove *in common*. Drawn together, they fan
+out in every direction, and that is the whole answer.
+
+Produced by `tools/extract_longest_trips.py`; the cell is skipped if the file
+is not alongside the results."""))
+
+CELLS.append(code('''try:
+    longest = load("longest_trips.json")
+except Exception as exc:
+    longest = None
+    print(f"longest_trips.json not found beside the results ({type(exc).__name__});"
+          " run tools/extract_longest_trips.py to produce it")
+
+if longest:
+    print(longest["note"])
+    print()
+    print(f"  selection : {longest['selection']}")
+    print(f"  scanned   : {longest['trips_scanned']:,} trips")
+    print(f"  dropped as wandering: {longest['trips_rejected_as_wandering']:,}")
+    print()
+    t = longest["trips"]
+    print(f"  {'#':>3}{'km':>9}{'end to end':>12}{'tortuosity':>12}{'km/h':>8}")
+    for i, r in enumerate(t[:10], 1):
+        print(f"  {i:>3}{r['distance_km']:>9.2f}{r['end_to_end_km']:>12.2f}"
+              f"{r['tortuosity']:>12.2f}{r['avg_speed_kmh']:>8.1f}")
+    print(f"  ... {len(t)} journeys in total, shortest {t[-1]['distance_km']:.2f} km")'''))
+
+CELLS.append(code('''if longest:
+    m = folium.Map(location=[41.15, -8.61], zoom_start=10, tiles="cartodbpositron")
+    for i, r in enumerate(longest["trips"]):
+        pts = [(p["lat"], p["lng"]) for p in r["coordinates"]]
+        if len(pts) < 2:
+            continue
+        folium.PolyLine(
+            pts, color=PALETTE[i % len(PALETTE)], weight=2, opacity=0.55,
+            tooltip=f"{r['distance_km']:.1f} km &middot; {r['avg_speed_kmh']:.0f} km/h "
+                    f"&middot; tortuosity {r['tortuosity']:.2f}").add_to(m)
+    folium.LayerControl().add_to(m)
+    display(m)
+    print("Each line is ONE trip. No two of them share 40 km of road -- which is")
+    print("why the >= 40 km configuration is empty, and this is what that looks like.")'''))
+
 CELLS.append(md("""## 6. Unusual routes
 
 The brief's third question. A trip is unusual to the extent that it uses cell
