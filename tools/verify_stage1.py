@@ -31,7 +31,8 @@ import tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from config import PORTO_BBOX, MIN_TRIP_KM, MAX_TRIP_KM, MAX_DURATION_SEC  # noqa: E402
+from config import (PORTO_BBOX, REGION_BBOX, MIN_TRIP_KM, MAX_TRIP_KM,  # noqa: E402
+                    MAX_DURATION_SEC)
 
 LNG0, LAT0 = -8.6100, 41.1500   # comfortably inside the Porto box
 STEP = 0.002                    # ~0.168 km per 15 s hop  ->  ~40 km/h
@@ -83,7 +84,10 @@ def build_csv(path: str) -> dict:
     add("T03", None, "bad_json", raw_polyline="[[-8.61,41.15],[-8.608,41.15]")  # unclosed
     add("T04", _line(1), "too_few_points")
     add("T05", [[LNG0, LAT0]] * (max_points + 1), "too_long")
-    add("T06", [[LNG0, LAT0], [-9.5000, LAT0], [LNG0 + STEP, LAT0]], "out_of_bbox")
+    # Outside the REGION box now, not merely outside the study area: a point in
+    # the next town is a journey, and only a satellite error is a rejection.
+    add("T06", [[LNG0, LAT0], [REGION_BBOX["min_lng"] - 2.0, LAT0],
+                [LNG0 + STEP, LAT0]], "out_of_bbox")
     add("T07", [[LNG0, LAT0], [LNG0 + 0.06, LAT0]], "gps_jump")          # ~5 km in 15 s
     add("T08", [[LNG0, LAT0]] * 5, "stationary")                          # dedups to one point
     add("T09", [[LNG0, LAT0], [LNG0 + 0.0005, LAT0]], "too_short_distance")

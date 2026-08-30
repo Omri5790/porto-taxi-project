@@ -34,7 +34,7 @@ from scripts.stage3.io_utils import write_json
 from config import (
     LOCAL_RAW_CSV, LOCAL_CLEANED_PARQUET, LOCAL_STATS_JSON,
     GCS_RAW_CSV, GCS_CLEANED_PARQUET,
-    PORTO_BBOX, MIN_POINTS, MAX_DURATION_SEC, MAX_JUMP_KM,
+    PORTO_BBOX, REGION_BBOX, MIN_POINTS, MAX_DURATION_SEC, MAX_JUMP_KM,
     MIN_TRIP_KM, MAX_TRIP_KM, LOCAL_SAMPLE_FRACTION
 )
 
@@ -81,8 +81,12 @@ def make_cleaner(counters):
     from the run rather than asserted alongside it.
     """
     def clean_partition(rows):
-        min_lng, max_lng = PORTO_BBOX["min_lng"], PORTO_BBOX["max_lng"]
-        min_lat, max_lat = PORTO_BBOX["min_lat"], PORTO_BBOX["max_lat"]
+        # Validity is judged against the region; the study area is only used to
+        # record how many trips leave it.  See REGION_BBOX in config.py for why.
+        min_lng, max_lng = REGION_BBOX["min_lng"], REGION_BBOX["max_lng"]
+        min_lat, max_lat = REGION_BBOX["min_lat"], REGION_BBOX["max_lat"]
+        p_min_lng, p_max_lng = PORTO_BBOX["min_lng"], PORTO_BBOX["max_lng"]
+        p_min_lat, p_max_lat = PORTO_BBOX["min_lat"], PORTO_BBOX["max_lat"]
         max_points = MAX_DURATION_SEC // 15
         max_jump = MAX_JUMP_KM
 
@@ -120,18 +124,28 @@ def make_cleaner(counters):
                 counters["too_long"].add(1)
                 continue
 
-            # ── Rule 5: any point outside the Porto bounding box ────────────
-            # Checking only the endpoints, as the previous version did, lets a
-            # mid-trip satellite glitch into the Atlantic survive -- and that
-            # single bad point then distorts the distance and the H3 sequence.
+            # ── Rule 5: any point outside the REGION box ────────────────────
+            # Checked on every point, not just the endpoints: a mid-trip glitch
+            # passes an endpoint-only check and then distorts that trip's
+            # distance and its whole H3 sequence.
+            #
+            # The box is the region, not the city.  Judging against the city
+            # removed 16,716 trips whose median length was 16 km -- journeys to
+            # neighbouring towns, counted as satellite errors.
             out_of_box = False
+            leaves_porto = False
             for c in coords:
                 if not (min_lng <= c[0] <= max_lng and min_lat <= c[1] <= max_lat):
                     out_of_box = True
                     break
+                if not (p_min_lng <= c[0] <= p_max_lng
+                        and p_min_lat <= c[1] <= p_max_lat):
+                    leaves_porto = True
             if out_of_box:
                 counters["out_of_bbox"].add(1)
                 continue
+            if leaves_porto:
+                counters["left_study_area"].add(1)
 
             # ── Rules 6 & 7: consecutive duplicates, and implausible jumps ──
             clean_coords = [coords[0]]
@@ -263,7 +277,7 @@ def main():
         rule_names = ["read", "missing_data", "empty_polyline", "bad_json",
                       "too_few_points", "too_long", "out_of_bbox", "gps_jump",
                       "stationary", "too_short_distance", "too_long_distance",
-                      "kept"]
+                      "left_study_area", "kept"]
         counters = {name: spark.sparkContext.accumulator(0) for name in rule_names}
 
         cleaned_rdd = df_raw.rdd.mapPartitions(make_cleaner(counters))
@@ -313,6 +327,9 @@ def main():
         rules = {name: acc.value for name, acc in counters.items()}
         total_read = rules.pop("read")
         kept = rules.pop("kept")
+        # Not a removal: trips that leave the study area but stay in the region
+        # are KEPT.  Counted so the report can say how many there are.
+        left_study_area = rules.pop("left_study_area")
         removed = total_read - kept
 
         RULE_LABELS = {
@@ -321,7 +338,7 @@ def main():
             "bad_json":           "2b. POLYLINE not valid JSON",
             "too_few_points":     "3. fewer than 2 GPS points",
             "too_long":           "4. duration over 24 hours (meter left running)",
-            "out_of_bbox":        "5. a GPS point outside the Porto bounding box",
+            "out_of_bbox":        "5. a GPS point outside the wider region (satellite error)",
             "gps_jump":           "6. jump implying over 200 km/h (satellite error)",
             "stationary":         "7. under 2 distinct points after deduplication",
             "too_short_distance": f"8. shorter than {MIN_TRIP_KM} km (not a journey)",
@@ -371,6 +388,9 @@ def main():
                 "unique_taxis": num_taxis,
                 "mean_points_kept_after_dedup": round(dedup_ratio, 4)
                 if dedup_ratio is not None else None,
+                "kept_trips_leaving_study_area": left_study_area,
+                "kept_trips_leaving_study_area_pct": round(
+                    100.0 * left_study_area / max(kept, 1), 4),
             },
             "per_rule_removed": {
                 key: {"label": label, "trips": rules.get(key, 0),
@@ -379,6 +399,7 @@ def main():
             },
             "thresholds": {
                 "porto_bbox": PORTO_BBOX,
+                "region_bbox": REGION_BBOX,
                 "min_points": MIN_POINTS,
                 "max_duration_sec": MAX_DURATION_SEC,
                 "max_jump_km": round(MAX_JUMP_KM, 4),
@@ -393,6 +414,12 @@ def main():
                             "Deduplication removes stationary points but not the time "
                             "they represent.",
                 "quantiles": "approxQuantile with relativeError=1e-4.",
+                "bounding_box": "Validity is judged against region_bbox. porto_bbox is "
+                                "the study area; trips leaving it are kept and counted "
+                                "as kept_trips_leaving_study_area. Judging validity "
+                                "against the study area removed 16,716 trips of median "
+                                "length 16 km -- journeys to neighbouring towns, not "
+                                "satellite errors.",
             },
             "generated_utc": datetime.now(timezone.utc).isoformat(),
         }

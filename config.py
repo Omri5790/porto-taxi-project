@@ -25,13 +25,39 @@ GCS_H3_PARQUET = f"{GCS_BUCKET}/data/h3_encoded_trips.parquet"
 # ──────────────────────────────────────────────
 # Porto Geographic Bounding Box
 # ──────────────────────────────────────────────
-# The greater Porto metropolitan area. Points outside this box are GPS errors.
+# The greater Porto metropolitan area.  This is the *study area* -- where the
+# corridors we care about live, and the extent the maps are drawn over.
 # Source: OpenStreetMap bounding box for Porto, Portugal + buffer
 PORTO_BBOX = {
     "min_lng": -8.7500,
     "max_lng": -8.4500,
     "min_lat": 41.0500,
     "max_lat": 41.2500,
+}
+
+# Points outside PORTO_BBOX are NOT automatically GPS errors, and treating them
+# that way threw away exactly the trips this project needs.
+#
+# Measured on 400,000 raw rows: 4,482 trips have a point outside PORTO_BBOX.
+# Only 0.4% of them have a single point outside -- the isolated-spike pattern a
+# satellite glitch produces.  42% have more than *half* their points outside,
+# the median excursion past the boundary is 6.7 km, and 78.6% stay within 20 km
+# of it.  Those are journeys to neighbouring towns, not errors.
+#
+# And they are overwhelmingly the long ones: median 16.05 km against 3.91 km for
+# the trips that were kept, with 89.8% over 10 km and 24.8% over 20 km.  The old
+# rule was removing a quarter of the trips long enough to contain a 20 km
+# corridor, while looking for corridors of 20 and 40 km.
+#
+# So validity is judged against a wider region box, and the study area is left
+# to do the job it is actually for.  A genuine satellite error still fails:
+# an isolated spike creates a step of hundreds of km/h, which MAX_JUMP_KM
+# catches, and a sustained excursion beyond this box is not a taxi fare.
+REGION_BBOX = {
+    "min_lng": -9.7500,
+    "max_lng": -7.4500,
+    "min_lat": 40.0500,
+    "max_lat": 42.2500,
 }
 
 # ──────────────────────────────────────────────
